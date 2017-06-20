@@ -17,7 +17,6 @@
 #ifdef __ANDROID__
 #include <bits/stl_algo.h>
 #endif
-#include "../Utils/MD5/md5.h"
 #include "Shop.h"
 #include "io_helper.h"
 
@@ -73,7 +72,7 @@ Book *Book::parse(const string &path) {
             json_free(str);
             
             json_delete(node);
-            
+
             DIR *dir = opendir(path.c_str());
             if (dir) {
                 struct dirent* ent = NULL;
@@ -81,6 +80,7 @@ Book *Book::parse(const string &path) {
                     if (ent->d_type!=8 && ent->d_name[0] != '.') {
                         Ref<Chapter> chapter = Chapter::parse(path + '/' + ent->d_name);
                         if (chapter) {
+                            chapter->setShopId(book->getShopId());
                             book->chapters->at(chapter->getUrl()) = chapter;
                         }
                     }
@@ -133,12 +133,20 @@ const map<string, Ref<Book> > &Book::getLocalBooks() {
 }
 
 void Book::removeBook() {
+    Ref<Shop> shop = Shop::find(getShopId());
+    if (shop) {
+        for (map<string, Variant>::iterator it = chapters->begin(), _e = chapters->end(); it != _e; ++it) {
+            shop->cancelDownload(it->second.get<Chapter>());
+        }
+    }
     string path = FileSystem::getInstance()->getStoragePath() + "/local_books/" + md5(url.c_str(), url.size());
     removeDir(path.c_str());
     local_books.erase(url);
 }
 
 void Book::removeChapter(nl::Chapter *chapter) {
+    Ref<Shop> shop = Shop::find(getShopId());
+    if (shop) shop->cancelDownload(chapter);
     string path = FileSystem::getInstance()->getStoragePath() + "/local_books/" + md5(url.c_str(), url.size());
     path.push_back('/');
     path += md5(chapter->getUrl().c_str(), chapter->getUrl().size());
@@ -203,7 +211,7 @@ bool Book::insertLocalChapter(nl::Chapter *chapter) {
                 mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             }
             path.push_back('/');
-            path += "data.json";
+            path += Chapter::DATA_FILE;
             
             chapter->saveConfig(path);
             chapters->at(chapter->getUrl()) = Ref<Chapter>(chapter);
@@ -275,5 +283,13 @@ string Book::picturePath(nl::Chapter *chapter, int idx) {
     char p_str[14];
     sprintf(p_str, "%04d.pic", idx);
     path += p_str;
+    return path;
+}
+
+string Book::chapterPath(Chapter *chapter) {
+    string path = FileSystem::getInstance()->getStoragePath() + "/local_books/" + md5(url.c_str(), url.size());
+    path.push_back('/');
+    path += md5(chapter->getUrl().c_str(), chapter->getUrl().size());
+    path.push_back('/');
     return path;
 }

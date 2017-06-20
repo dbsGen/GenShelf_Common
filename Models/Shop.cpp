@@ -21,6 +21,7 @@
 #include "../GlobalsDefine.h"
 #include <utils/json/libjson.h>
 #include <set>
+#include "DownloadQueue.h"
 #include "../Utils/MD5/md5.h"
 
 using namespace nl;
@@ -50,26 +51,6 @@ namespace nl {
         url_md5_string = outStr;
         return url_md5_string.c_str();
     }
-    
-    struct DownloadOperation {
-        Ref<Shop> shop;
-        Ref<Book> book;
-        Ref<Reader> reader;
-        Ref<Chapter> chapter;
-        Ref<HTTPClient> client;
-        
-        vector<Ref<Page> > pages;
-        int page_offset;
-        
-        int complete_count;
-        int page_count;
-        
-        void start();
-        void stop();
-        bool checkPages();
-        void failed();
-        void complete();
-    };
     
 }
 
@@ -123,8 +104,6 @@ const StringName Shop::NOTIFICATION_INSTALLED("SHOP_INSTALLED");
 const StringName Shop::NOTIFICATION_REMOVED("SHOP_REMOVED");
 const StringName Shop::NOTIFICATION_SCRIPT_READY("SHOP_SCRIPT_READY");
 const StringName Shop::NOTIFICATION_COLLECTED("SHOP_COLLECTED");
-const StringName Shop::NOTIFICATION_PAGE_LOADED("SHOP_PAGE_LOADED");
-const StringName Shop::NOTIFICATION_ON_PAGE("SHOP_ON_PAGE");
 
 const RefArray &Shop::getLocalShops() {
     if (!readed) {
@@ -162,14 +141,14 @@ const Ref<Shop> &Shop::getCurrentShop() {
                 Ref<Shop> shop = local_shops.at(i);
                 if (shop->getIdentifier() == id) {
                     selected_shop = shop;
-                    selected_shop->setupLibraryScript();
+                    selected_shop->setupScript();
                     break;
                 }
             }
         }
         if (!selected_shop && shops.size()) {
             selected_shop = (Ref<Shop>)shops.at(0);
-            selected_shop->setupLibraryScript();
+            selected_shop->setupScript();
         }
     }
     if (selected_shop && !selected_shop->isLocalize()) {
@@ -183,12 +162,12 @@ void Shop::setCurrentShop(const Ref<nl::Shop> &shop) {
         if (shop && shop->isLocalize()) {
             FileSystem::getInstance()->configSet("selected_shop", shop->getIdentifier().str());
         }
-        if (selected_shop) {
-            selected_shop->clearLibraryScript();
-        }
+//        if (selected_shop) {
+//            selected_shop->clearScript();
+//        }
         selected_shop = shop;
         if (selected_shop) {
-            selected_shop->setupLibraryScript();
+            selected_shop->setupScript();
         }
         variant_vector vs{shop};
         NotificationCenter::getInstance()->trigger(NOTIFICATION_SHOP_CHANGED, &vs);
@@ -208,16 +187,14 @@ Ref<Shop> Shop::find(const hicore::StringName &identifier) {
 }
 
 Shop::Shop() : is_doing(false),
-               library_script(NULL),
-               reader_script(NULL),
+               script(NULL),
                is_localize(false),
                version(0) {
 
 }
 
 Shop::~Shop() {
-    clearLibraryScript();
-    clearReaderScript();
+    clearScript();
 }
 
 void Shop::onShopRemoved(void *key, void *params, void *data) {
@@ -225,7 +202,7 @@ void Shop::onShopRemoved(void *key, void *params, void *data) {
         vector<Variant> *vs = (vector<Variant>*)params;
         Shop *shop = vs->at(0).get<Shop>();
         if (*selected_shop == shop) {
-            selected_shop->clearLibraryScript();
+            selected_shop->clearScript();
             setCurrentShop(Ref<Shop>::null());
         }
     }
@@ -438,24 +415,17 @@ failed:
     NotificationCenter::getInstance()->trigger(NOTIFICATION_INSTALLED, &vs);
 }
 
-void Shop::clearLibraryScript() {
-    if (library_script) {
-        delete library_script;
-        library_script = NULL;
+void Shop::clearScript() {
+    if (script) {
+        delete script;
+        script = NULL;
     }
 }
 
-void Shop::clearReaderScript() {
-    if (reader_script) {
-        delete reader_script;
-        reader_script = NULL;
-    }
-}
-
-void Shop::setupLibraryScript() {
-    if (isLocalize() && !library_script) {
-        library_script = new RubyScript;
-        library_script->setup((FileSystem::getInstance()->getResourcePath() + "/ruby").c_str());
+void Shop::setupScript() {
+    if (isLocalize() && !script) {
+        script = new RubyScript;
+        script->setup((FileSystem::getInstance()->getResourcePath() + "/ruby").c_str());
         
         string path;
         if (IS_DEBUG) {
@@ -463,31 +433,10 @@ void Shop::setupLibraryScript() {
         }else {
             path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
         }
-        library_script->addEnvPath(path.c_str());
+        script->addEnvPath(path.c_str());
         path += "/config.rb";
-        
-        library_script->run(path.c_str());
-        
-        vector<Variant> vs{this};
-        NotificationCenter::getInstance()->trigger(NOTIFICATION_SCRIPT_READY, &vs);
-    }
-}
 
-void Shop::setupReaderScript() {
-    if (isLocalize() && !reader_script) {
-        reader_script = new RubyScript;
-        reader_script->setup((FileSystem::getInstance()->getResourcePath() + "/ruby").c_str());
-        
-        string path;
-        if (IS_DEBUG) {
-            path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root/";
-        }else {
-            path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
-        }
-        reader_script->addEnvPath(path.c_str());
-        path += "/config.rb";
-        
-        reader_script->run(path.c_str());
+        script->run(path.c_str());
         
         vector<Variant> vs{this};
         NotificationCenter::getInstance()->trigger(NOTIFICATION_SCRIPT_READY, &vs);
@@ -495,17 +444,17 @@ void Shop::setupReaderScript() {
 }
 
 bool Shop::setupLibrary(Library *lib) {
-    if (!library_script) {
-        setupLibraryScript();
+    if (!script) {
+        setupScript();
     }
     lib->shop = this;
-    mrb_value val = library_script->runScript("$config[:library]");
+    mrb_value val = script->runScript("$config[:library]");
     if (mrb_bool(val)) {
         struct RClass *scls = mrb_class_ptr(val);
-        RubyInstance *sins = library_script->newBuff(scls, lib, NULL, 0);
+        RubyInstance *sins = script->newBuff(scls, lib, NULL, 0);
         
-        mrb_gv_set(library_script->getMRB(),
-                   mrb_intern_cstr(library_script->getMRB(), "library_instance"),
+        mrb_gv_set(script->getMRB(),
+                   mrb_intern_cstr(script->getMRB(), "library_instance"),
                    mrb_obj_value(sins->getScriptInstance()));
         
         return true;
@@ -513,18 +462,9 @@ bool Shop::setupLibrary(Library *lib) {
     return false;
 }
 
-bool Shop::setupReader(Reader *reader, bool rs) {
-    RubyScript *script = NULL;
-    if (rs) {
-        if (!reader_script) {
-            setupReaderScript();
-        }
-        script = reader_script;
-    }else {
-        if (!library_script) {
-            setupLibraryScript();
-        }
-        script = library_script;
+bool Shop::setupReader(Reader *reader) {
+    if (!script) {
+        setupScript();
     }
     reader->shop = this;
     reader->setIdentifier(getIdentifier());
@@ -545,18 +485,9 @@ bool Shop::setupReader(Reader *reader, bool rs) {
     return false;
 }
 
-bool Shop::unbindReader(nl::Reader *reader, bool rs) {
-    RubyScript *script = NULL;
-    if (rs) {
-        if (!reader_script) {
-            setupReaderScript();
-        }
-        script = reader_script;
-    }else {
-        if (!library_script) {
-            setupLibraryScript();
-        }
-        script = library_script;
+bool Shop::unbindReader(nl::Reader *reader) {
+    if (!script) {
+        setupScript();
     }
     
     char str[40];
@@ -584,8 +515,7 @@ void Shop::install() {
 }
 
 void Shop::remove() {
-    clearLibraryScript();
-    clearReaderScript();
+    clearScript();
     auto it = local_shops->begin();
     while (it != local_shops->end()) {
         Ref<Shop> shop = *it;
@@ -635,136 +565,11 @@ int Shop::collect(Book *book, nl::Chapter *chapter) {
 }
 
 int Shop::download(nl::Book *book, nl::Chapter *chapter) {
-    auto &shops = Shop::getLocalShops();
-    Ref<Shop> f_shop;
-    for (int i = 0, t = shops.size(); i < t; ++i) {
-        Ref<Shop> shop = shops.at(i);
-        if (shop->getIdentifier() == book->getShopId()) {
-            f_shop = shop;
-        }
-    }
-    if (f_shop && processing_readers.find(chapter) == processing_readers.end()) {
-        Reader *reader = new_t(Reader);
-        f_shop->setupReader(reader, true);
-        DownloadOperation *op = new DownloadOperation;
-        op->reader = reader;
-        op->book = book;
-        op->shop = f_shop;
-        op->chapter = chapter;
-        
-        if (chapter->getPages().size() == 0) {
-            if (!f_shop) return 2;
-            op->start();
-            processing_readers[chapter] = op;
-            
-            reader->setOnPageCount(C([=](bool success, int count){
-                if (success) {
-                    op->page_count = count;
-                    if (op->checkPages()) {
-                        downloadPage(op);
-                    }
-                }else {
-                    operationFailed(op);
-                }
-            }));
-            reader->setOnPageLoaded(C([=](bool success, int page_idx, const Ref<Page> &page){
-                if (success) {
-                    op->complete_count += 1;
-                    if (op->pages.size() <= page_idx) {
-                        op->pages.resize(page_idx + 1);
-                    }
-                    op->pages[page_idx] = page;
-                    if (op->checkPages()) {
-                        downloadPage(op);
-                    }
-                }else {
-                    operationFailed(op);
-                }
-            }));
-            Variant v(chapter);
-            pointer_vector vs{&v};
-            reader->apply("process", vs);
-        }else {
-            op->pages.clear();
-            auto &arr = op->chapter->getPages();
-            for (auto it = arr->begin(), _e = arr->end(); it != _e; ++it) {
-                op->pages.push_back(*it);
-            }
-            op->page_offset = 0;
-            op->page_count = (int)op->pages.size();
-            downloadPage(op);
-        }
-        return 0;
-    }else {
-        return 1;
-    }
-    return 2;
+    return DownloadQueue::getInstance()->startDownload(book, chapter);
 }
 
-void Shop::operationFailed(void *o) {
-    DownloadOperation *op = (DownloadOperation*)o;
-    if (op->shop)
-        op->shop->unbindReader(*op->reader);
-    op->failed();
-    processing_readers.erase(*op->chapter);
-    delete op;
-}
-
-void Shop::operationComplete(void *o) {
-    DownloadOperation *op = (DownloadOperation*)o;
-    if (op->shop)
-        op->shop->unbindReader(*op->reader);
-    op->complete();
-    processing_readers.erase(*op->chapter);
-    delete op;
-}
-
-void Shop::downloadPage(void *o) {
-    DownloadOperation *op = (DownloadOperation*)o;
-    
-    if (op->pages.size() == 0) {
-        op->reader->apply("stop");
-        op->chapter->setStatus(Chapter::None);
-        return;
-    }
-    if (op->page_offset >= op->pages.size()) {
-        op->chapter->setStatus(Chapter::Complete);
-        return;
-    }
-    auto &page = op->pages[op->page_offset];
-    string pic_path = op->book->picturePath(*op->chapter, op->page_offset);
-    while (access(pic_path.c_str(), F_OK) == 0 && op->page_offset < op->page_count) {
-        op->page_offset++;
-        pic_path = op->book->picturePath(*op->chapter, op->page_offset);
-    }
-    if (op->page_offset >= op->page_count) {
-        operationComplete(op);
-        return;
-    }
-    op->client = page->makeClient();
-    page->setStatus(0);
-    int idx = op->page_offset;
-    op->client->setReadCache(true);
-    op->client->setDelay(0.1);
-    op->client->setOnComplete(C([=](const Ref<HTTPClient> &client){
-        op->client = NULL;
-        if (client->getError().empty()) {
-            page->setStatus(1);
-            op->book->movePicture(*op->chapter, client->getPath(), idx);
-            variant_vector vs {op->chapter, idx};
-            NotificationCenter::getInstance()->trigger(Shop::NOTIFICATION_ON_PAGE, &vs);
-            if (op->page_offset < op->page_count-1) {
-                op->page_offset ++;
-                downloadPage(op);
-            }else {
-                operationComplete(op);
-            }
-        }else {
-            page->setStatus(-1);
-            operationFailed(op);
-        }
-    }));
-    op->client->start();
+void Shop::cancelDownload(Chapter *chapter) {
+    DownloadQueue::getInstance()->stopDownload(chapter);
 }
 
 const Ref<Settings> &Shop::getSettings() {
@@ -772,8 +577,8 @@ const Ref<Settings> &Shop::getSettings() {
         
         settings = new Settings;
         
-        if (!reader_script) {
-            setupReaderScript();
+        if (!script) {
+            setupScript();
         }
         
         string path;
@@ -782,9 +587,9 @@ const Ref<Settings> &Shop::getSettings() {
         }else {
             path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
         }
-        mrb_value val = reader_script->runScript("$config[:settings]");
+        mrb_value val = script->runScript("$config[:settings]");
         if (val.tt == MRB_TT_STRING) {
-            char* string_path = mrb_str_to_cstr(reader_script->getMRB(), val);
+            char* string_path = mrb_str_to_cstr(script->getMRB(), val);
             string spath = path + '/' + string_path;
             if (access(spath.c_str(), F_OK) == 0) {
                 settings->parse(spath.c_str());
@@ -793,10 +598,10 @@ const Ref<Settings> &Shop::getSettings() {
             }
         }else if (val.tt == MRB_TT_CLASS || val.tt == MRB_TT_ICLASS || val.tt == MRB_TT_SCLASS){
             struct RClass *scls = mrb_class_ptr(val);
-            RubyInstance *sins = reader_script->newBuff(scls, *settings, NULL, 0);
+            RubyInstance *sins = script->newBuff(scls, *settings, NULL, 0);
             
-            mrb_gv_set(reader_script->getMRB(),
-                       mrb_intern_cstr(reader_script->getMRB(), "settings"),
+            mrb_gv_set(script->getMRB(),
+                       mrb_intern_cstr(script->getMRB(), "settings"),
                        mrb_obj_value(sins->getScriptInstance()));
             sins->apply("process", NULL, 0);
         }
@@ -809,41 +614,5 @@ const Ref<Settings> &Shop::getSettings() {
         }
     }
     return settings;
-}
-
-void DownloadOperation::start() {
-    complete_count = 0;
-    chapter->setStatus(Chapter::Downloading);
-    
-}
-
-void DownloadOperation::stop() {
-    reader->apply("stop");
-    chapter->setStatus(Chapter::Pause);
-}
-
-bool DownloadOperation::checkPages() {
-    if (page_count == complete_count) {
-        variant_vector _s;
-        for (auto it = pages.begin(), _e = pages.end(); it != _e; ++it) {
-            _s.push_back(*it);
-        }
-        chapter->setPages(_s);
-        page_offset = 0;
-        book->saveChapterConfig(*chapter);
-        vector<Variant> vs{chapter};
-        NotificationCenter::getInstance()->trigger(Shop::NOTIFICATION_PAGE_LOADED, &vs);
-        return true;
-    }
-    return false;
-}
-
-void DownloadOperation::failed() {
-    reader->apply("stop");
-    chapter->setStatus(Chapter::Pause);
-}
-
-void DownloadOperation::complete() {
-    chapter->setStatus(Chapter::Complete);
 }
 

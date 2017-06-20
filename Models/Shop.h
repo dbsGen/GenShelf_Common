@@ -131,8 +131,7 @@ namespace nl {
         static RefArray local_shops;
         static Ref<Shop> selected_shop;
         static bool readed;
-        hiscript::RubyScript *library_script;
-        hiscript::RubyScript *reader_script;
+        hiscript::RubyScript *script;
 
         bool is_doing;
 
@@ -153,11 +152,6 @@ namespace nl {
         static void onShopRemoved(void *key, void *params, void *data);
         static void onInstallComplete(void *client, void *sd, void *data);
 
-        static void operationFailed(void *op);
-        static void operationComplete(void *op);
-
-        static void downloadPage(void *op);
-
     public:
         Shop();
         ~Shop();
@@ -174,8 +168,6 @@ namespace nl {
         static const StringName NOTIFICATION_SCRIPT_READY;
 
         static const StringName NOTIFICATION_COLLECTED;
-        static const StringName NOTIFICATION_PAGE_LOADED;
-        static const StringName NOTIFICATION_ON_PAGE;
 
         METHOD _FORCE_INLINE_ const string &getName() {
             return name;
@@ -230,20 +222,19 @@ namespace nl {
         METHOD static void setCurrentShop(const Ref<Shop> &shop);
         METHOD static Ref<Shop> find(const StringName &identifier);
 
-        METHOD void clearLibraryScript();
-        METHOD void setupLibraryScript();
-        METHOD void clearReaderScript();
-        METHOD void setupReaderScript();
+        METHOD void clearScript();
+        METHOD void setupScript();
 
         METHOD bool setupLibrary(Library *lib);
-        METHOD bool setupReader(Reader *reader, bool reader_script = false);
-        METHOD bool unbindReader(Reader *reader, bool reader_script = false);
+        METHOD bool setupReader(Reader *reader);
+        METHOD bool unbindReader(Reader *reader);
 
         /**
          * @return 0 : ok , 1 : collected , 2 : not installed
          */
         METHOD int collect(Book *book, Chapter *chapter);
         METHOD static int download(Book *book, Chapter *chapter);
+        METHOD static void cancelDownload(Chapter *chapter);
 
         METHOD void install();
         METHOD void remove();
@@ -264,15 +255,14 @@ namespace nl {
             ADD_METHOD(cls, Shop, getCurrentShop);
             ADD_METHOD(cls, Shop, setCurrentShop);
             ADD_METHOD(cls, Shop, find);
-            ADD_METHOD(cls, Shop, clearLibraryScript);
-            ADD_METHOD(cls, Shop, setupLibraryScript);
-            ADD_METHOD(cls, Shop, clearReaderScript);
-            ADD_METHOD(cls, Shop, setupReaderScript);
+            ADD_METHOD(cls, Shop, clearScript);
+            ADD_METHOD(cls, Shop, setupScript);
             ADD_METHOD(cls, Shop, setupLibrary);
             ADD_METHOD(cls, Shop, setupReader);
             ADD_METHOD(cls, Shop, unbindReader);
             ADD_METHOD(cls, Shop, collect);
             ADD_METHOD(cls, Shop, download);
+            ADD_METHOD(cls, Shop, cancelDownload);
             ADD_METHOD(cls, Shop, install);
             ADD_METHOD(cls, Shop, remove);
         ON_LOADED_END

@@ -96,6 +96,7 @@ namespace nl {
         }
         bool movePicture(Chapter *chapter, const string &path, int idx);
         METHOD string picturePath(Chapter *chapter, int idx);
+        METHOD string chapterPath(Chapter *chapter);
 
         Book() {}
 

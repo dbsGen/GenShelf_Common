@@ -24,6 +24,7 @@ namespace nl {
             Pause,
             Complete
         };
+        static const char *DATA_FILE;
 
     private:
 
@@ -31,6 +32,7 @@ namespace nl {
         string url;
         int index;
         Status status;
+        StringName shop_id;
 
         RefArray pages;
         int picture_loaded;
@@ -61,6 +63,15 @@ namespace nl {
         }
         PROPERTY(pages, getPages, setPages);
 
+        METHOD _FORCE_INLINE_ const StringName &getShopId() {
+            return shop_id;
+        }
+
+        METHOD _FORCE_INLINE_ void setShopId(const StringName &shop_id) {
+            this->shop_id = shop_id;
+        }
+        PROPERTY(shop_id, getShopId, setShopId);
+
         _FORCE_INLINE_ void setStatus(Status status) {
             this->status = status;
         }
@@ -68,7 +79,14 @@ namespace nl {
             return status;
         }
 
+        METHOD float downloadPercent();
+        METHOD int downloadStatus();
+        METHOD int pageStatus(int index);
+        METHOD int oldDownloaded();
+        METHOD void bringFirst(int index);
+
         void saveConfig(const string &path);
+
         static Chapter *parse(const string &path);
 
     protected:
@@ -76,6 +94,12 @@ namespace nl {
             ADD_PROPERTY(cls, "name", ADD_METHOD(cls, Chapter, getName), ADD_METHOD(cls, Chapter, setName));
             ADD_PROPERTY(cls, "url", ADD_METHOD(cls, Chapter, getUrl), ADD_METHOD(cls, Chapter, setUrl));
             ADD_PROPERTY(cls, "pages", ADD_METHOD(cls, Chapter, getPages), ADD_METHOD(cls, Chapter, setPages));
+            ADD_PROPERTY(cls, "shop_id", ADD_METHOD(cls, Chapter, getShopId), ADD_METHOD(cls, Chapter, setShopId));
+            ADD_METHOD(cls, Chapter, downloadPercent);
+            ADD_METHOD(cls, Chapter, downloadStatus);
+            ADD_METHOD(cls, Chapter, pageStatus);
+            ADD_METHOD(cls, Chapter, oldDownloaded);
+            ADD_METHOD(cls, Chapter, bringFirst);
         ON_LOADED_END
     CLASS_END
 }

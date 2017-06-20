@@ -7,12 +7,15 @@
 //
 
 #include "Chapter.h"
+#include "DownloadQueue.h"
 #include <utils/json/libjson.h>
 #include <core/Data.h>
 #include "unistd.h"
 
 using namespace nl;
 using namespace hicore;
+
+const char *Chapter::DATA_FILE = "data.json";
 
 void Chapter::saveConfig(const string &path) {
     
@@ -51,7 +54,7 @@ void Chapter::saveConfig(const string &path) {
 }
 
 Chapter *Chapter::parse(const string &path) {
-    string file = path + "/data.json";
+    string file = path + "/" + DATA_FILE;
     Chapter *chapter = NULL;
     
     if (access(file.c_str(), F_OK) == 0) {
@@ -70,11 +73,6 @@ Chapter *Chapter::parse(const string &path) {
                 chapter->setName(str);
                 json_free(str);
             }
-            
-//            JSONNODE *index_node = json_get(node, "index");
-//            if (index_node) {
-//                chapter->setIndex((int)json_as_int(index_node));
-//            }
             
             JSONNODE *pages_node = json_get(node, "pages");
             if (pages_node) {
@@ -98,4 +96,24 @@ Chapter *Chapter::parse(const string &path) {
         json_delete(node);
     }
     return chapter;
+}
+
+float Chapter::downloadPercent() {
+    return DownloadQueue::getInstance()->chapterPercent(this);
+}
+
+int Chapter::downloadStatus() {
+    return DownloadQueue::getInstance()->chapterStatus(this);
+}
+
+int Chapter::pageStatus(int index) {
+    return DownloadQueue::getInstance()->pageStatus(this, index);
+}
+
+int Chapter::oldDownloaded() {
+    return DownloadQueue::getInstance()->chapterOldDownloaded(this);
+}
+
+void Chapter::bringFirst(int index) {
+    DownloadQueue::getInstance()->pageStatusAndBringFirst(this, index);
 }

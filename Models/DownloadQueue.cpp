@@ -13,6 +13,7 @@ using namespace hirender;
 const StringName &DownloadPage::NOTIFICATION_STATUS("PAGE_STATUS");
 const StringName &DownloadChapter::NOTIFICATION_STATUS("CHAPTER_STATUS");
 const StringName &DownloadChapter::NOTIFICATION_PERCENT("CHAPTER_PERCENT");
+const StringName &DownloadChapter::NOTIFICATION_PAGE_COUNT("CHAPTER_PAGE_COUNT");
 
 void DownloadPage::start() {
     if (status != DownloadQueue::StatusNone) return;
@@ -100,6 +101,7 @@ void DownloadChapter::stop() {
             queue->pausePage(*it->second);
         }
         queue->checkPageQueue();
+        setStatus(DownloadQueue::StatusNone);
     }
 }
 
@@ -121,6 +123,8 @@ void DownloadChapter::start() {
                 if (page_count == pages.size()) {
                     saveChapterInfo();
                 }
+                variant_vector vs{chapter, count};
+                NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs);
             }else {
                 setStatus(DownloadQueue::StatusFailed);
             }
@@ -220,6 +224,15 @@ void DownloadChapter::checkStatus() {
             }
         }
         old_downloaded = i;
+    }
+}
+
+int DownloadQueue::pageCount(Chapter *chapter) {
+    auto it = chapters.find(chapter->getUrl());
+    if (it == chapters.end()) {
+        return 0;
+    }else {
+        return it->second->page_count;
     }
 }
 
@@ -351,7 +364,12 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
             }
             return ResultStart;
         }else {
-            return ResultDownloading;
+            if (it->second->status == StatusNone) {
+                it->second->start();
+                return ResultStart;
+            }else {
+                return ResultDownloading;
+            }
         }
     }else {
         return ResultShopNotFound;

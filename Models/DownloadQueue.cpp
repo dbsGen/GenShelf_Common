@@ -342,6 +342,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                         }else {
                             dp->status = StatusNone;
                             complete = false;
+                            pushPage(dp);
                         }
                         dc->pages[i] = dp;
                     }

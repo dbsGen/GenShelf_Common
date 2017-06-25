@@ -12,6 +12,7 @@
 #include "Models/Page.h"
 #include "Models/Shop.h"
 #include "Models/Settings.h"
+#include "Models/DuktapeEngine.h"
 #include <core/math/Type.h>
 
 void GS_load_classes() {
@@ -22,5 +23,5 @@ void GS_load_classes() {
     nl::Shop::getClass();
     nl::Library::getClass();
     nl::Reader::getClass();
-
+    nl::DuktapeEngine::getClass();
 }

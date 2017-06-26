@@ -17,11 +17,15 @@ using namespace hicore;
 namespace nl {
     CLASS_BEGIN_TN(DuktapeEngine, Singleton, 1, DuktapeEngine)
     
+    void *context;
+    
     static void fatal_handler(void *udata, const char *msg);
     
     Variant process(void *context);
     
 public:
+    DuktapeEngine();
+    ~DuktapeEngine();
     METHOD Variant eval(const char *script);
     
     protected:

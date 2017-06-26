@@ -12,6 +12,15 @@
 
 using namespace nl;
 
+DuktapeEngine::DuktapeEngine() {
+    context = duk_create_heap(NULL, NULL, NULL, NULL,
+                              &DuktapeEngine::fatal_handler);
+}
+
+DuktapeEngine::~DuktapeEngine() {
+    duk_destroy_heap((duk_context*)context);
+}
+
 void DuktapeEngine::fatal_handler(void *udata, const char *msg) {
     LOG(w, "error: %s", msg);
 }
@@ -45,16 +54,12 @@ Variant DuktapeEngine::process(void *context) {
 }
 
 Variant DuktapeEngine::eval(const char *script) {
-    duk_context *ctx;
-    ctx = duk_create_heap(NULL, NULL, NULL, NULL,
-                          &DuktapeEngine::fatal_handler);
+    duk_context *ctx = (duk_context*)context;
     duk_eval_string(ctx, script);
     
     Variant ret = process(ctx);
     
     duk_pop(ctx);
-    
-    duk_destroy_heap(ctx);
     
     return ret;
 }

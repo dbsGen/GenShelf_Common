@@ -583,7 +583,7 @@ const Ref<Settings> &Shop::getSettings() {
         
         string path;
         if (IS_DEBUG) {
-            path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root/";
+            path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root";
         }else {
             path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
         }
@@ -614,5 +614,17 @@ const Ref<Settings> &Shop::getSettings() {
         }
     }
     return settings;
+}
+
+Ref<Data> Shop::file(const char *filename) {
+    string path;
+    if (IS_DEBUG) {
+        path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root";
+    }else {
+        path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
+    }
+    path += '/';
+    path += filename;
+    return new FileData(path.c_str());
 }
 

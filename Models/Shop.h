@@ -150,6 +150,7 @@ namespace nl {
         Ref<Settings> settings;
         Ref<hirender::HTTPClient> client;
         int version;
+        int package_version;
 
         bool is_localize;
 
@@ -221,6 +222,14 @@ namespace nl {
             this->version = version;
         }
         PROPERTY(version, getVersion, setVersion);
+    
+        METHOD _FORCE_INLINE_ int getPackageVersion() const {
+            return package_version;
+        }
+        METHOD _FORCE_INLINE_ void setPackageVersion(int package_version) {
+            this->package_version = package_version;
+        }
+        PROPERTY(package_version, getPackageVersion, setPackageVersion);
 
         METHOD const Ref<Settings> &getSettings();
 
@@ -253,6 +262,7 @@ namespace nl {
             ADD_PROPERTY(cls, "icon", ADD_METHOD(cls, Shop, getIcon), ADD_METHOD(cls, Shop, setIcon));
             ADD_PROPERTY(cls, "description", ADD_METHOD(cls, Shop, getDescription), ADD_METHOD(cls, Shop, setDescription));
             ADD_PROPERTY(cls, "version", ADD_METHOD(cls, Shop, getVersion), ADD_METHOD(cls, Shop, setVersion));
+            ADD_PROPERTY(cls, "package_version", ADD_METHOD(cls, Shop, getPackageVersion), ADD_METHOD(cls, Shop, setPackageVersion));
             ADD_METHOD(cls, Shop, getLocalShops);
             ADD_METHOD(cls, Shop, parse);
             ADD_METHOD(cls, Shop, parseShops);

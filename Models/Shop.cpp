@@ -189,8 +189,8 @@ Ref<Shop> Shop::find(const hicore::StringName &identifier) {
 Shop::Shop() : is_doing(false),
                script(NULL),
                is_localize(false),
-               version(0) {
-
+               version(0),
+               package_version(0) {
 }
 
 Shop::~Shop() {
@@ -277,6 +277,10 @@ Shop *Shop::parseJson(void *node) {
     JSONNODE *version_node = json_get(node, "version");
     if (version_node) {
         shop->version = json_as_int(version_node);
+    }
+    JSONNODE *pv_node = json_get(node, "package_version");
+    if (pv_node) {
+        shop->package_version = json_as_int(pv_node);
     }
     
     return shop;
@@ -391,6 +395,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
         it = json_insert(node, it, json_new_a("host", shop->host.c_str()));
         it = json_insert(node, it, json_new_a("url", shop->package.c_str()));
         it = json_insert(node, it, json_new_a("description", shop->description.c_str()));
+        it = json_insert(node, it, json_new_i("package_version", shop->package_version));
         
         FILE *file = fopen((path + "config.json").c_str(), "wb");
         json_char *chs = json_write(node);

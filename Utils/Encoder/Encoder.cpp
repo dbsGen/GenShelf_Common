@@ -6,12 +6,12 @@
 //  Copyright © 2017 gen. All rights reserved.
 //
 
-#include "URLCoder.h"
+#include "Encoder.h"
 #include <iconv.h>
 
 using namespace nl;
 
-const char URLCoder_hex[]="0123456789ABCDEF";
+const char Encoder_hex[]="0123456789ABCDEF";
 
 bool is_non_symbol(char c)
 {
@@ -20,7 +20,7 @@ bool is_non_symbol(char c)
     return (c_int >= 48 && c_int <= 57) || (c_int >= 65 && c_int <= 90) || (c_int >= 97 && c_int <= 122);
 }
 
-string URLCoder::encode(const char *str) {
+string Encoder::urlEncode(const char *str) {
     stringstream ss;
     const char *ch = str;
     unsigned char c;
@@ -29,8 +29,8 @@ string URLCoder::encode(const char *str) {
             ss << c;
         }else {
             ss << '%';
-            ss << URLCoder_hex[c/16];
-            ss << URLCoder_hex[c%16];
+            ss << Encoder_hex[c/16];
+            ss << Encoder_hex[c%16];
         }
         ++ch;
     }
@@ -39,7 +39,7 @@ string URLCoder::encode(const char *str) {
 
 #define UTF_8 "utf-8"
 
-string URLCoder::encodeWithEncoding(const char *str, const char *encoding) {
+string Encoder::urlEncodeWithEncoding(const char *str, const char *encoding) {
     if (strcmp(encoding, UTF_8) != 0) {
         iconv_t cd = iconv_open(encoding, "utf-8");
         if (cd) {
@@ -51,7 +51,7 @@ string URLCoder::encodeWithEncoding(const char *str, const char *encoding) {
             
             iconv(cd, (char**)&instr, &inlen, &outstr, &outlen);
             
-            string ret = encode(oristr);
+            string ret = urlEncode(oristr);
             
             free(oristr);
             
@@ -59,5 +59,26 @@ string URLCoder::encodeWithEncoding(const char *str, const char *encoding) {
             return ret;
         }
     }
-    return encode(str);
+    return urlEncode(str);
+}
+
+string Encoder::decode(const hicore::Ref<hicore::Data> &data, const char *encoding) {
+    iconv_t cd = iconv_open("utf-8", encoding);
+    if (cd) {
+        const char *instr = data->text();
+        size_t inlen = data->getSize();
+        size_t outlen = 2 * inlen;
+        char *oristr = (char*)malloc(outlen);
+        char *outstr = oristr;
+        
+        iconv(cd, (char**)&instr, &inlen, &outstr, &outlen);
+        
+        string ret(oristr);
+        
+        free(oristr);
+        
+        iconv_close(cd);
+        return ret;
+    }
+    return string();
 }

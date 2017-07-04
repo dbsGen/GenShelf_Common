@@ -34,7 +34,7 @@ namespace nl {
         RefMap chapters;
 
     public:
-
+        // 书本名
         METHOD _FORCE_INLINE_ const string &getName() {
             return name;
         }
@@ -42,6 +42,7 @@ namespace nl {
             this->name = name;
         }
         PROPERTY(name, getName, setName);
+        // 书本缩略图
         METHOD _FORCE_INLINE_ const string &getThumb() {
             return thumb;
         }
@@ -49,6 +50,8 @@ namespace nl {
             this->thumb = thumb;
         }
         PROPERTY(thumb, getThumb, setThumb);
+        // 副标题，按照解析到的信息来，可以是作者，或者更新日期.
+        // 会显示到列表页面。
         METHOD _FORCE_INLINE_ const string &getSubtitle() {
             return subtitle;
         }
@@ -56,6 +59,7 @@ namespace nl {
             this->subtitle = subtitle;
         }
         PROPERTY(subtitle, getSubtitle, setSubtitle);
+        // 详细信息，漫画简介。
         METHOD _FORCE_INLINE_ const string &getDes() {
             return des;
         }
@@ -63,6 +67,7 @@ namespace nl {
             this->des = des;
         }
         PROPERTY(des, getDes, setDes);
+        // url地址
         METHOD _FORCE_INLINE_ const string &getUrl() {
             return url;
         }
@@ -71,6 +76,7 @@ namespace nl {
         }
         PROPERTY(url, getUrl, setUrl);
 
+        // shop id
         METHOD _FORCE_INLINE_ const StringName &getShopId() {
             return shop_id;
         }
@@ -80,6 +86,7 @@ namespace nl {
         }
         PROPERTY(shop_id, getShopId, setShopId);
 
+        // 读取所有已经收藏的书本。
         METHOD static RefArray localBooks();
         static const map<string, Ref<Book> > &getLocalBooks();
         static Book *parse(const string &path);
@@ -89,12 +96,14 @@ namespace nl {
         void convertLocal();
         bool insertLocalChapter(Chapter *chapter);
         void saveChapterConfig(Chapter *chapter);
+        // 移除收藏
         METHOD void removeBook();
         METHOD void removeChapter(Chapter *chapter);
         _FORCE_INLINE_ int getIndex() {
             return index;
         }
         bool movePicture(Chapter *chapter, const string &path, int idx);
+        // 或者本地位置
         METHOD string picturePath(Chapter *chapter, int idx);
         METHOD string chapterPath(Chapter *chapter);
 

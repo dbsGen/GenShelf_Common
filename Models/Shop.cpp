@@ -404,7 +404,18 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
         json_free(chs);
         json_delete(node);
 
-        local_shops.vec()->push_back(shop);
+        bool found = false;
+        for (auto it = local_shops->begin(), _e = local_shops->end(); it != _e; ++it) {
+            Shop *ls = (*it).get<Shop>();
+            if (ls->getIdentifier() == shop->getIdentifier()) {
+                found = true;
+                ls->setVersion(shop->getVersion());
+                break;
+            }
+        }
+        if (!found) {
+            local_shops.vec()->push_back(shop);
+        }
         shop->is_localize = true;
         vector<Variant> vs{shop};
         NotificationCenter::getInstance()->trigger(NOTIFICATION_INSTALLED, &vs);

@@ -22,7 +22,7 @@ DuktapeEngine::~DuktapeEngine() {
 }
 
 void DuktapeEngine::fatal_handler(void *udata, const char *msg) {
-    LOG(w, "error: %s", msg);
+    LOG(w, "Duktape: %s", msg);
 }
 
 Variant DuktapeEngine::process(void *context) {

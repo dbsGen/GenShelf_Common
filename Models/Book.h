@@ -30,6 +30,7 @@ namespace nl {
 
         static bool local_books_inited;
         static map<string, Ref<Book> > local_books;
+        static map<string, Ref<Book> > liked_books;
 
         RefMap chapters;
 
@@ -88,17 +89,22 @@ namespace nl {
 
         // 读取所有已经收藏的书本。
         METHOD static RefArray localBooks();
+        // 所有喜欢
+        METHOD static RefArray likedBooks();
+        METHOD bool isLiked();
         static const map<string, Ref<Book> > &getLocalBooks();
         static Book *parse(const string &path);
         METHOD _FORCE_INLINE_ const RefMap &getChapters() {
             return chapters;
         }
-        void convertLocal();
+        void convertLocal(bool just_like = false);
         bool insertLocalChapter(Chapter *chapter);
         void saveChapterConfig(Chapter *chapter);
         // 移除收藏
         METHOD void removeBook();
         METHOD void removeChapter(Chapter *chapter);
+        // 移除喜欢
+        METHOD void unlikeBook();
         _FORCE_INLINE_ int getIndex() {
             return index;
         }
@@ -119,10 +125,13 @@ namespace nl {
             ADD_PROPERTY(cls, "url", ADD_METHOD(cls, Book, getUrl), ADD_METHOD(cls, Book, setUrl));
             ADD_PROPERTY(cls, "shop_id", ADD_METHOD(cls, Book, getShopId), ADD_METHOD(cls, Book, setShopId));
             ADD_METHOD(cls, Book, localBooks);
+            ADD_METHOD(cls, Book, likedBooks);
+            ADD_METHOD(cls, Book, unlikeBook);
             ADD_METHOD(cls, Book, getChapters);
             ADD_METHOD(cls, Book, picturePath);
             ADD_METHOD(cls, Book, removeBook);
             ADD_METHOD(cls, Book, removeChapter);
+            ADD_METHOD(cls, Book, isLiked);
         ON_LOADED_END
     CLASS_END
 }

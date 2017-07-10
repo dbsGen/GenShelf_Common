@@ -251,6 +251,8 @@ namespace nl {
         METHOD static int download(Book *book, Chapter *chapter);
         METHOD static void cancelDownload(Chapter *chapter);
 
+        METHOD int like(Book *book);
+
         METHOD void install();
         METHOD void remove();
         METHOD Ref<Data> file(const char *filename);
@@ -277,6 +279,7 @@ namespace nl {
             ADD_METHOD(cls, Shop, setupLibrary);
             ADD_METHOD(cls, Shop, setupReader);
             ADD_METHOD(cls, Shop, unbindReader);
+            ADD_METHOD(cls, Shop, like);
             ADD_METHOD(cls, Shop, collect);
             ADD_METHOD(cls, Shop, download);
             ADD_METHOD(cls, Shop, cancelDownload);

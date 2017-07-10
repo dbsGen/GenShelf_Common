@@ -24,6 +24,7 @@ using namespace nl;
 using namespace hirender;
 
 map<string, Ref<Book> > Book::local_books;
+map<string, Ref<Book> > Book::liked_books;
 bool Book::local_books_inited = false;
 
 Book *Book::parse(const string &path) {
@@ -110,6 +111,25 @@ RefArray Book::localBooks() {
     return vs;
 }
 
+RefArray Book::likedBooks() {
+    variant_vector vs;
+    Book::getLocalBooks();
+    for (auto it = liked_books.begin(), _e = liked_books.end(); it != _e; ++it) {
+        vs.push_back(it->second);
+    }
+    struct BookCompare {
+        bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
+            return b1->getIndex() < b2->getIndex();
+        }
+    };
+    sort(vs.begin(), vs.end(), BookCompare());
+    return vs;
+}
+
+bool Book::isLiked() {
+    return liked_books.find(url) != liked_books.end();
+}
+
 const map<string, Ref<Book> > &Book::getLocalBooks() {
     if (!local_books_inited) {
         local_books_inited = true;
@@ -123,6 +143,21 @@ const map<string, Ref<Book> > &Book::getLocalBooks() {
                     Book *book = parse(path + '/' + ent->d_name);
                     if (book) {
                         local_books[book->getUrl()] = book;
+                    }
+                }
+            }
+            closedir(dir);
+        }
+
+        path = FileSystem::getInstance()->getStoragePath() + "/liked_books";
+        dir = opendir(path.c_str());
+        if (dir) {
+            struct dirent* ent = NULL;
+            while (NULL != (ent = readdir(dir))) {
+                if (ent->d_type!=8 && ent->d_name[0] != '.') {
+                    Book *book = parse(path + '/' + ent->d_name);
+                    if (book) {
+                        liked_books[book->getUrl()] = book;
                     }
                 }
             }
@@ -154,10 +189,15 @@ void Book::removeChapter(nl::Chapter *chapter) {
     chapters->erase(chapter->getUrl());
 }
 
-void Book::convertLocal() {
+void Book::convertLocal(bool just_like) {
     getLocalBooks();
     if (local_books.find(url) == local_books.end()) {
-        string path = FileSystem::getInstance()->getStoragePath() + "/local_books";
+        string path;
+        if (just_like) {
+            path = FileSystem::getInstance()->getStoragePath() + "/liked_books";
+        }else {
+            path = FileSystem::getInstance()->getStoragePath() + "/local_books";
+        }
         if (access(path.c_str(), F_OK) != 0) {
             mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         }
@@ -195,9 +235,21 @@ void Book::convertLocal() {
         fclose(file);
         json_free(chs);
         json_delete(node);
-        
-        local_books[url] = this;
+
+        if (just_like) {
+            liked_books[url] = this;
+        }else {
+            local_books[url] = this;
+        }
     }
+}
+
+void Book::unlikeBook() {
+    Ref<Shop> shop = Shop::find(getShopId());
+    string path = FileSystem::getInstance()->getStoragePath() + "/liked_books/" + md5(url.c_str(), url.size());
+    path.push_back('/');
+    removeDir(path.c_str());
+    liked_books.erase(url);
 }
 
 bool Book::insertLocalChapter(nl::Chapter *chapter) {

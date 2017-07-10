@@ -577,7 +577,14 @@ int Shop::collect(Book *book, nl::Chapter *chapter) {
     }else {
         return 2;
     }
-    
+}
+
+int Shop::like(Book *book) {
+    if (isLocalize()) {
+        book->convertLocal(true);
+        return 0;
+    }
+    return 2;
 }
 
 int Shop::download(nl::Book *book, nl::Chapter *chapter) {

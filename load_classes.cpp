@@ -12,6 +12,7 @@
 #include "Models/Page.h"
 #include "Models/Shop.h"
 #include "Models/Settings.h"
+#include "Models/KeyValue.h"
 #include "Models/DuktapeEngine.h"
 #include "Utils/Encoder/Encoder.h"
 #include <core/math/Type.h>
@@ -26,4 +27,5 @@ void GS_load_classes() {
     nl::Reader::getClass();
     nl::DuktapeEngine::getClass();
     nl::Encoder::getClass();
+    nl::KeyValue::getClass();
 }

@@ -7,6 +7,7 @@
 //
 
 #include "Page.h"
+#include <utils/json/libjson.h>
 
 using namespace nl;
 
@@ -22,4 +23,38 @@ Ref<hirender::HTTPClient> Page::makeClient() const {
         client->addParameter(it->first, it->second);
     }
     return client;
+}
+
+
+JSONNODE *Page::unparse() const {
+    JSONNODE *node = json_new(JSON_NODE);
+    json_push_back(node, json_new_a("url", url.c_str()));
+    json_push_back(node, json_new_a("picture", picture.c_str()));
+    if (headers->size() > 0) {
+        JSONNODE  *hn = json_new(JSON_NODE);
+        json_set_name(hn, "headers");
+        for (auto it = headers->begin(), _e = headers->end(); it != _e; ++it) {
+            json_push_back(hn, json_new_a(it->first.c_str(), (const char*)it->second));
+        }
+        json_push_back(node, hn);
+    }
+    return node;
+}
+
+void Page::parse(JSONNODE *node) {
+    char *str = json_as_string(json_get(node, "url"));
+    url = str;
+    json_free(str);
+    str = json_as_string(json_get(node, "picture"));
+    picture = str;
+    json_free(str);
+
+    JSONNODE *hn = json_get(node, "headers");
+    for (JSONNODE_ITERATOR it = json_begin(hn), _e = json_end(hn); it != _e; ++it) {
+        char  *name = json_name(*it);
+        char *content = json_as_string(*it);
+        addHeader(name, content);
+        json_free(name);
+        json_free(content);
+    }
 }

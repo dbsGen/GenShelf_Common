@@ -85,6 +85,11 @@ namespace nl {
         METHOD int oldDownloaded();
         METHOD void bringFirst(int index);
 
+        METHOD RefArray cachedPages() const;
+        METHOD void cachePages(const RefArray &pages) const;
+        METHOD int lastIndex() const;
+        METHOD void setLastIndex(int idx) const;
+
         void saveConfig(const string &path);
 
         static Chapter *parse(const string &path);
@@ -100,6 +105,10 @@ namespace nl {
             ADD_METHOD(cls, Chapter, pageStatus);
             ADD_METHOD(cls, Chapter, oldDownloaded);
             ADD_METHOD(cls, Chapter, bringFirst);
+            ADD_METHOD(cls, Chapter, cachedPages);
+            ADD_METHOD(cls, Chapter, cachePages);
+            ADD_METHOD(cls, Chapter, lastIndex);
+            ADD_METHOD(cls, Chapter, setLastIndex);
         ON_LOADED_END
     CLASS_END
 }

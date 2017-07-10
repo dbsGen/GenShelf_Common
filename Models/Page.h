@@ -12,6 +12,7 @@
 #include <core/Ref.h>
 #include <utils/network/HTTPClient.h>
 #include <core/Map.h>
+#include <utils/json/libjson.h>
 #include "../nl_define.h"
 
 using namespace hicore;
@@ -87,6 +88,9 @@ namespace nl {
         PROPERTY(status, getStatus, setStatus);
 
         METHOD Ref<hirender::HTTPClient> makeClient() const;
+
+        JSONNODE *unparse() const;
+        void parse(JSONNODE *node);
 
     protected:
         ON_LOADED_BEGIN(cls, RefObject)

@@ -7,6 +7,7 @@
 //
 
 #include "Book.h"
+#include "KeyValue.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -26,6 +27,33 @@ using namespace hirender;
 map<string, Ref<Book> > Book::local_books;
 map<string, Ref<Book> > Book::liked_books;
 bool Book::local_books_inited = false;
+
+map<string, Ref<BookData> > BookData::caches;
+
+void BookData::pushCache(const string &key, const Ref<BookData> &kv) {
+    while (caches.size() > 100) {
+        caches.erase(caches.begin());
+    }
+    caches[key] = kv;
+}
+
+Ref<BookData> BookData::get(const string &url) {
+    auto it = caches.find(url);
+    if (it != caches.end()) {
+        return it->second;
+    }
+    RefArray arr = BookData::query()->equal("chapter_url", url)->results();
+    if (arr.size() > 0) {
+        Ref<BookData> bd = arr.at(0).ref();
+        pushCache(url, bd);
+        return bd;
+    }else {
+        Ref<BookData> bd = new BookData;
+        bd->setUrl(url);
+        pushCache(url, bd);
+        return bd;
+    }
+}
 
 Book *Book::parse(const string &path) {
     string file = path + "/data.json";
@@ -344,4 +372,32 @@ string Book::chapterPath(Chapter *chapter) {
     path += md5(chapter->getUrl().c_str(), chapter->getUrl().size());
     path.push_back('/');
     return path;
+}
+
+void Book::checkData() {
+    if (!book_data) {
+        book_data = BookData::get(url);
+    }
+}
+
+Ref<Chapter> Book::lastChapter() {
+    checkData();
+    if (!book_data->getUrl().empty()) {
+        Ref<Chapter> chapter = new Chapter;
+        chapter->setName(book_data->getName());
+        chapter->setUrl(book_data->getUrl());
+        chapter->setShopId(getShopId());
+        return chapter;
+    }
+    return Ref<Chapter>::null();
+}
+
+void Book::setLastChapter(const Ref<Chapter> &chapter) {
+    checkData();
+    if (book_data->getUrl() != chapter->getUrl()) {
+        book_data->setName(chapter->getName());
+        book_data->setUrl(chapter->getUrl());
+        book_data->setPageIndex(0);
+        book_data->save();
+    }
 }

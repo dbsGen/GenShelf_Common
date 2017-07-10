@@ -11,11 +11,38 @@
 
 #include <core/Ref.h>
 #include "Chapter.h"
+#include <utils/database/Model.h>
 #include "../nl_define.h"
 
 using namespace hicore;
+using namespace hirender;
 
 namespace nl {
+    CLASS_BEGIN_TN(BookData, Model, 1, BookData)
+        static map<string, Ref<BookData> > caches;
+        static void pushCache(const string &key, const Ref<BookData> &kv);
+
+        DEFINE_STRING(chapter_url, ChapterUrl);
+        DEFINE_STRING(name, Name);
+        DEFINE_STRING(url, Url);
+        DEFINE_FIELD(int, page_index, PageIndex)
+
+    public:
+
+        BookData() : page_index(0) {}
+
+        static Ref<BookData> get(const string &url);
+
+        static void registerFields() {
+            Model<BookData>::registerFields();
+            ADD_FILED(BookData, chapter_url, ChapterUrl, true);
+            ADD_FILED(BookData, name, Name, false);
+            ADD_FILED(BookData, url, Url, false);
+            ADD_FILED(BookData, page_index, PageIndex, false);
+        }
+
+    CLASS_END
+
     CLASS_BEGIN_N(Book, RefObject)
 
         string name;
@@ -31,6 +58,10 @@ namespace nl {
         static bool local_books_inited;
         static map<string, Ref<Book> > local_books;
         static map<string, Ref<Book> > liked_books;
+
+        Ref<BookData> book_data;
+
+        void checkData();
 
         RefMap chapters;
 
@@ -78,7 +109,7 @@ namespace nl {
         PROPERTY(url, getUrl, setUrl);
 
         // shop id
-        METHOD _FORCE_INLINE_ const StringName &getShopId() {
+        METHOD _FORCE_INLINE_ const StringName &getShopId() const {
             return shop_id;
         }
 
@@ -113,6 +144,9 @@ namespace nl {
         METHOD string picturePath(Chapter *chapter, int idx);
         METHOD string chapterPath(Chapter *chapter);
 
+        METHOD Ref<Chapter> lastChapter();
+        METHOD void setLastChapter(const Ref<Chapter> &chapter);
+
         Book() {}
 
     protected:
@@ -132,6 +166,8 @@ namespace nl {
             ADD_METHOD(cls, Book, removeBook);
             ADD_METHOD(cls, Book, removeChapter);
             ADD_METHOD(cls, Book, isLiked);
+            ADD_METHOD(cls, Book, lastChapter);
+            ADD_METHOD(cls, Book, setLastChapter);
         ON_LOADED_END
     CLASS_END
 }

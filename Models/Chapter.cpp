@@ -10,6 +10,7 @@
 #include "DownloadQueue.h"
 #include <utils/json/libjson.h>
 #include <core/Data.h>
+#include "KeyValue.h"
 #include "unistd.h"
 
 using namespace nl;
@@ -35,11 +36,8 @@ void Chapter::saveConfig(const string &path) {
         json_set_name(pages_node, "pages");
         JSONNODE_ITERATOR pit = json_begin(pages_node);
         for (auto it = pages->begin(), _e = pages->end(); it != _e; ++it) {
-            JSONNODE *node = json_new(JSON_NODE);
-            JSONNODE_ITERATOR jit = json_begin(node);
-
-            jit = json_insert(node, jit, json_new_a("url", (*it).get<Page>()->getUrl().c_str()));
-            jit = json_insert(node, jit, json_new_a("picture", (*it).get<Page>()->getPicture().c_str()));
+            Ref<Page> page = *it;
+            JSONNODE *node = page->unparse();
             pit = json_insert(pages_node, pit, node);
         }
         it = json_insert(node, it, pages_node);
@@ -80,12 +78,7 @@ Chapter *Chapter::parse(const string &path) {
                 for (json_index_t i = 0; i < size; ++i) {
                     JSONNODE *page_node = json_at(pages_node, i);
                     Ref<Page> page = new_t(Page);
-                    str = json_as_string(json_get(page_node, "url"));
-                    page->setUrl(str);
-                    json_free(str);
-                    str = json_as_string(json_get(page_node, "picture"));
-                    page->setPicture(str);
-                    json_free(str);
+                    page->parse(page_node);
                     chapter->pages->push_back(page);
                 }
                 chapter->status = Pause;
@@ -116,4 +109,55 @@ int Chapter::oldDownloaded() {
 
 void Chapter::bringFirst(int index) {
     DownloadQueue::getInstance()->pageStatusAndBringFirst(this, index);
+}
+
+RefArray Chapter::cachedPages() const {
+    string key = "chapter:";
+    key += url;
+    string val = KeyValue::get(key);
+    RefArray pages;
+    if (!val.empty()) {
+        JSONNODE *pages_node = json_parse(val.c_str());
+        json_index_t size = json_size(pages_node);
+        for (json_index_t i = 0; i < size; ++i) {
+            JSONNODE *page_node = json_at(pages_node, i);
+            Ref<Page> page = new_t(Page);
+            page->parse(page_node);
+            pages->push_back(page);
+        }
+        json_delete(pages_node);
+    }
+    return pages;
+}
+
+void Chapter::cachePages(const RefArray &pages) const {
+    string key = "chapter:";
+    key += url;
+    JSONNODE *pages_node = json_new(JSON_ARRAY);
+    for (auto it = pages->begin(), _e = pages->end(); it != _e; ++it) {
+        Ref<Page> page = *it;
+        JSONNODE *node = page->unparse();
+        json_push_back(pages_node, node);
+    }
+    char *text = json_write(pages_node);
+    KeyValue::set(key, text);
+    json_free(text);
+}
+
+int Chapter::lastIndex() const {
+    string key = "page_index:";
+    key += url;
+    string val = KeyValue::get(key);
+    if (!val.empty()) {
+        return atoi(val.c_str());
+    }
+    return 0;
+}
+
+void Chapter::setLastIndex(int idx) const {
+    string key = "page_index:";
+    key += url;
+    char index_str[20];
+    sprintf(index_str, "%d", idx);
+    KeyValue::set(key, index_str);
 }

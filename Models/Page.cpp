@@ -49,12 +49,14 @@ void Page::parse(JSONNODE *node) {
     picture = str;
     json_free(str);
 
-    JSONNODE *hn = json_get(node, "headers");
-    for (JSONNODE_ITERATOR it = json_begin(hn), _e = json_end(hn); it != _e; ++it) {
-        char  *name = json_name(*it);
-        char *content = json_as_string(*it);
-        addHeader(name, content);
-        json_free(name);
-        json_free(content);
+    if (json_find(node, "headers") != json_end(node)) {
+        JSONNODE *hn = json_get(node, "headers");
+        for (JSONNODE_ITERATOR it = json_begin(hn), _e = json_end(hn); it != _e; ++it) {
+            char  *name = json_name(*it);
+            char *content = json_as_string(*it);
+            addHeader(name, content);
+            json_free(name);
+            json_free(content);
+        }
     }
 }

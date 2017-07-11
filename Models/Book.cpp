@@ -42,14 +42,14 @@ Ref<BookData> BookData::get(const string &url) {
     if (it != caches.end()) {
         return it->second;
     }
-    RefArray arr = BookData::query()->equal("chapter_url", url)->results();
+    RefArray arr = BookData::query()->equal("url", url)->results();
     if (arr.size() > 0) {
         Ref<BookData> bd = arr.at(0).ref();
         pushCache(url, bd);
         return bd;
     }else {
         Ref<BookData> bd = new BookData;
-        bd->setChapterUrl(url);
+        bd->setUrl(url);
         pushCache(url, bd);
         return bd;
     }
@@ -385,7 +385,7 @@ Ref<Chapter> Book::lastChapter() {
     if (!book_data->getUrl().empty()) {
         Ref<Chapter> chapter = new Chapter;
         chapter->setName(book_data->getName());
-        chapter->setUrl(book_data->getUrl());
+        chapter->setUrl(book_data->getChapterUrl());
         chapter->setShopId(getShopId());
         return chapter;
     }
@@ -394,9 +394,10 @@ Ref<Chapter> Book::lastChapter() {
 
 void Book::setLastChapter(const Ref<Chapter> &chapter) {
     checkData();
-    if (book_data->getUrl() != chapter->getUrl()) {
+    if (book_data->getChapterUrl() != chapter->getUrl()) {
         book_data->setName(chapter->getName());
-        book_data->setUrl(chapter->getUrl());
+        book_data->setChapterUrl(chapter->getUrl());
+        book_data->setUrl(url);
         book_data->setPageIndex(0);
         book_data->save();
     }

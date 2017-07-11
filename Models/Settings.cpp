@@ -7,6 +7,7 @@
 //
 
 #include "Settings.h"
+#include <math.h>
 #include <core/Data.h>
 #include <core/String.h>
 #include <utils/json/libjson.h>
@@ -119,6 +120,28 @@ const Ref<SettingItem> &Settings::findItem(const string &name) const {
     return Ref<SettingItem>::null();
 }
 
+const Variant& Settings::find(const string &name) const {
+    const Ref<SettingItem> &item = findItem(name);
+    if (item) {
+        return item->getValue();
+    }else {
+        auto it = values.find(name);
+        if (it != values.end()) {
+            return it->second;
+        }
+        return Variant::null();
+    }
+}
+
+void Settings::set(const string &name, const Variant &val) {
+    const Ref<SettingItem> &item = findItem(name);
+    if (item) {
+        item->setValue(name);
+    }else {
+        values[name] = val;
+    }
+}
+
 void Settings::save() const {
     if (!path.empty()) {
         JSONNODE *node = json_new(JSON_NODE);
@@ -151,6 +174,22 @@ void Settings::save() const {
                         break;
                 }
             }
+        }
+        for (auto it = values.begin(), _e = values.end(); it != _e; ++it) {
+            const Variant &val = it->second;
+            JSONNODE *new_child = NULL;
+            const HClass *type = val.getType();
+            if (type == Integer::getClass() ||
+                    type == Long::getClass()) {
+                new_child = json_new_i(it->first.c_str(), (int)val);
+            }else if (type == Float::getClass() ||
+                    type == Double::getClass()) {
+                new_child = json_new_f(it->first.c_str(), val);
+            }else if (type == String::getClass()) {
+                new_child = json_new_a(it->first.c_str(), val);
+            }
+            if (new_child)
+                _it = json_insert(node, _it, new_child);
         }
         char *str = json_write(node);
         FILE *f = fopen(path.c_str(), "wb");
@@ -207,6 +246,31 @@ void Settings::load(const string &path) {
                             break;
                         }
                             
+                        default:
+                            break;
+                    }
+                }else {
+                    char type = json_type(child);
+                    switch (type) {
+                        case JSON_BOOL: {
+                            values[name] = (bool)json_as_bool(child);
+                            break;
+                        }
+                        case JSON_STRING: {
+                            char *str = json_as_string(child);
+                            values[name] = Variant(str);
+                            json_free(str);
+                            break;
+                        }
+                        case JSON_NUMBER: {
+                            float num = json_as_float(child);
+                            float n = floorf(num);
+                            if (num == n) {
+                                values[name] = (int)n;
+                            }else {
+                                values[name] = num;
+                            }
+                        }
                         default:
                             break;
                     }

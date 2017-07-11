@@ -88,6 +88,7 @@ namespace nl {
 
         string path;
         vector<Ref<SettingItem> > items;
+        map<string, Variant> values;
         Variant parseJson(void *node);
 
     public:
@@ -110,9 +111,8 @@ namespace nl {
         METHOD void save() const;
 
         METHOD const Ref<SettingItem> &findItem(const string &name) const;
-        METHOD _FORCE_INLINE_ const Variant &find(const string &name) const {
-            return findItem(name)->getValue();
-        }
+        METHOD const Variant &find(const string &name) const;
+        METHOD void set(const string &name, const Variant &val);
 
         EVENT(void, process);
 
@@ -126,6 +126,7 @@ namespace nl {
             ADD_METHOD(cls, Settings, save);
             ADD_METHOD(cls, Settings, findItem);
             ADD_METHOD(cls, Settings, find);
+            ADD_METHOD(cls, Settings, set);
         ON_LOADED_END
     CLASS_END
 }

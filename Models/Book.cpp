@@ -49,7 +49,7 @@ Ref<BookData> BookData::get(const string &url) {
         return bd;
     }else {
         Ref<BookData> bd = new BookData;
-        bd->setUrl(url);
+        bd->setChapterUrl(url);
         pushCache(url, bd);
         return bd;
     }

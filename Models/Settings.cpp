@@ -10,10 +10,14 @@
 #include <math.h>
 #include <core/Data.h>
 #include <core/String.h>
+#include <utils/NotificationCenter.h>
 #include <utils/json/libjson.h>
 
 using namespace nl;
 using namespace hicore;
+using namespace hirender;
+
+const StringName Settings::NOTIFICATION_OPEN_WEB_VIEW("OPEN_WEB_VIEW");
 
 const Variant &SettingItem::getValue() {
     if (!value.empty()) {
@@ -283,3 +287,7 @@ void Settings::load(const string &path) {
     }
 }
 
+void Settings::openWebView(const string &url, const string &name, const RefCallback &on_complete) {
+    variant_vector vs{url, name, on_complete};
+    NotificationCenter::getInstance()->trigger(NOTIFICATION_OPEN_WEB_VIEW, &vs);
+}

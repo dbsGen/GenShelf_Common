@@ -51,6 +51,8 @@ namespace nl {
         string des;
         string url;
 
+        RefMap thumb_headers;
+
         int     index;
 
         StringName  shop_id;
@@ -82,6 +84,15 @@ namespace nl {
             this->thumb = thumb;
         }
         PROPERTY(thumb, getThumb, setThumb);
+
+        METHOD _FORCE_INLINE_ const RefMap &getThumbHeaders() {
+            return thumb_headers;
+        }
+        METHOD _FORCE_INLINE_ void setThumbHeaders(const RefMap &headers) {
+            thumb_headers = headers;
+        }
+        PROPERTY(thumb_headers, getThumbHeaders, setThumbHeaders);
+
         // 副标题，按照解析到的信息来，可以是作者，或者更新日期.
         // 会显示到列表页面。
         METHOD _FORCE_INLINE_ const string &getSubtitle() {
@@ -154,6 +165,7 @@ namespace nl {
         ON_LOADED_BEGIN(cls, RefObject)
             ADD_PROPERTY(cls, "name", ADD_METHOD(cls, Book, getName), ADD_METHOD(cls, Book, setName));
             ADD_PROPERTY(cls, "thumb", ADD_METHOD(cls, Book, getThumb), ADD_METHOD(cls, Book, setThumb));
+            ADD_PROPERTY(cls, "thumb_headers", ADD_METHOD(cls, Book, getThumbHeaders), ADD_METHOD(cls, Book, setThumbHeaders));
             ADD_PROPERTY(cls, "subtitle", ADD_METHOD(cls, Book, getSubtitle), ADD_METHOD(cls, Book, setSubtitle));
             ADD_PROPERTY(cls, "des", ADD_METHOD(cls, Book, getDes), ADD_METHOD(cls, Book, setDes));
             ADD_PROPERTY(cls, "url", ADD_METHOD(cls, Book, getUrl), ADD_METHOD(cls, Book, setUrl));

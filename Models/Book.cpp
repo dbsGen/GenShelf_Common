@@ -96,6 +96,21 @@ Book *Book::parse(const string &path) {
             if (idx_node) {
                 book->index = (int)json_as_int(idx_node);
             }
+
+            JSONNODE_ITERATOR header_it = json_find(node, "thumb_headers");
+            if (header_it != json_end(node)) {
+                JSONNODE_ITERATOR it = json_begin(*header_it), _e = json_end(*header_it);
+                while (it != _e) {
+                    Map *map = *book->thumb_headers;
+                    char *name = json_name(*it);
+                    char *val = json_as_string(*it);
+                    map->set(name, Variant(val));
+                    json_free(name);
+                    json_free(val);
+                    ++it;
+                }
+            }
+
             str = json_as_string(shop_node);
             book->setShopId(str);
             json_free(str);
@@ -256,7 +271,13 @@ void Book::convertLocal(bool just_like) {
             it = json_insert(node, it, json_new_a("des", des.c_str()));
         }
         it = json_insert(node, it, json_new_i("index", local_books.size()));
-        
+        Map *map = *thumb_headers;
+        JSONNODE *headers_node = json_new(JSON_NODE);
+        for (auto hit = map->begin(), _e = map->end(); hit != _e; ++hit) {
+            json_push_back(headers_node, json_new_a(hit->first.c_str(), hit->second));
+        }
+        it = json_insert(node, it, headers_node);
+
         FILE *file = fopen(path.c_str(), "wb");
         json_char *chs = json_write(node);
         fwrite(chs, strlen(chs), 1, file);

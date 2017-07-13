@@ -11,6 +11,7 @@
 
 #include <core/Ref.h>
 #include <core/Array.h>
+#include <core/Callback.h>
 #include "../nl_define.h"
 
 using namespace hicore;
@@ -24,7 +25,8 @@ namespace nl {
             Mark,
             Switch,
             Password,
-            Divider
+            Divider,
+            Button
         };
         typedef int ItemType;
     private:
@@ -93,6 +95,8 @@ namespace nl {
 
     public:
 
+        static const StringName NOTIFICATION_OPEN_WEB_VIEW;
+
         METHOD _FORCE_INLINE_ void addItem(const Ref<SettingItem> &item) {
             items.push_back(item);
         }
@@ -116,6 +120,8 @@ namespace nl {
 
         EVENT(void, process);
 
+        METHOD void openWebView(const string &url, const string &name, const RefCallback &on_complete);
+
     protected:
         ON_LOADED_BEGIN(cls, RefObject)
             ADD_METHOD(cls, Settings, addItem);
@@ -127,6 +133,7 @@ namespace nl {
             ADD_METHOD(cls, Settings, findItem);
             ADD_METHOD(cls, Settings, find);
             ADD_METHOD(cls, Settings, set);
+            ADD_METHOD(cls, Settings, openWebView);
         ON_LOADED_END
     CLASS_END
 }

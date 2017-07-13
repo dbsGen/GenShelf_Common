@@ -541,6 +541,7 @@ void Shop::remove() {
             ++it;
         }
     }
+    settings = nullptr;
     string path = FileSystem::getInstance()->getStoragePath() + "/shops/" + identifier.str();
     removeDir(path.c_str());
     is_localize = false;

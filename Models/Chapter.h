@@ -16,6 +16,8 @@
 using namespace hicore;
 
 namespace nl {
+    class Book;
+
     CLASS_BEGIN_N(Chapter, RefObject)
     public:
         enum Status {
@@ -90,6 +92,8 @@ namespace nl {
         METHOD int lastIndex() const;
         METHOD void setLastIndex(int idx) const;
 
+        METHOD static void downloadingChapters(const RefArray &books, const RefArray &chapters);
+
         void saveConfig(const string &path);
 
         static Chapter *parse(const string &path);
@@ -109,6 +113,7 @@ namespace nl {
             ADD_METHOD(cls, Chapter, cachePages);
             ADD_METHOD(cls, Chapter, lastIndex);
             ADD_METHOD(cls, Chapter, setLastIndex);
+            ADD_METHOD(cls, Chapter, downloadingChapters);
         ON_LOADED_END
     CLASS_END
 }

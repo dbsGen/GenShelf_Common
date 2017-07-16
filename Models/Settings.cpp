@@ -7,6 +7,7 @@
 //
 
 #include "Settings.h"
+#include "Shop.h"
 #include <math.h>
 #include <core/Data.h>
 #include <core/String.h>
@@ -37,7 +38,7 @@ void Settings::removeItem(const Ref<nl::SettingItem> &item) {
 
 Variant Settings::parseJson(void *node) {
     Variant ret;
-    switch (json_type(node)) {
+    switch (json_ctype(node)) {
         case JSON_ARRAY:{
             variant_vector vs;
             for (int i = 0, t = json_size(node); i < t; ++i) {
@@ -135,6 +136,10 @@ const Variant& Settings::find(const string &name) const {
         }
         return Variant::null();
     }
+}
+
+Ref<Data> Settings::file(const char *filename) {
+    return shop->file(filename);
 }
 
 void Settings::set(const string &name, const Variant &val) {
@@ -254,7 +259,7 @@ void Settings::load(const string &path) {
                             break;
                     }
                 }else {
-                    char type = json_type(child);
+                    char type = json_ctype(child);
                     switch (type) {
                         case JSON_BOOL: {
                             values[name] = (bool)json_as_bool(child);

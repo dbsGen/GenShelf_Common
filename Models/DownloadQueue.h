@@ -42,6 +42,7 @@ namespace nl {
         static const StringName &NOTIFICATION_STATUS;
 
         DownloadPage();
+        ~DownloadPage();
 
         _FORCE_INLINE_ int getStatus() {
             return status;
@@ -100,6 +101,14 @@ namespace nl {
         }
         void setStatus(int status);
 
+        _FORCE_INLINE_ const Ref<Book> &getBook() {
+            return book;
+        }
+
+        _FORCE_INLINE_ const Ref<Chapter> &getChapter() {
+            return chapter;
+        }
+
         void start();
         void stop();
 
@@ -107,6 +116,7 @@ namespace nl {
 
     CLASS_BEGIN_TN(DownloadQueue, Singleton, 1, DownloadQueue)
 
+        Ref<DownloadChapter> cache_chapter;
         map<string, Ref<DownloadChapter> > chapters;
         pointer_list chapters_queue;
         pointer_list pages_queue;
@@ -119,6 +129,8 @@ namespace nl {
 
         void pushPage(DownloadPage *page);
         void pausePage(DownloadPage *page);
+
+        void loadAll();
 
         friend class DownloadPage;
         friend class DownloadChapter;
@@ -141,6 +153,8 @@ namespace nl {
 
         DownloadQueue();
 
+        const map<string, Ref<DownloadChapter> > &getChapters();
+
         METHOD int pageCount(Chapter *chapter);
         METHOD int chapterOldDownloaded(Chapter *chapter);
         METHOD float chapterPercent(Chapter *chapter);
@@ -150,6 +164,10 @@ namespace nl {
 
         METHOD Result startDownload(Book *book, Chapter *chapter);
         METHOD void stopDownload(Chapter *chapter);
+        METHOD void removeDownload(Chapter *chapter);
+
+        METHOD void save();
+        METHOD void restore();
 
     protected:
         ON_LOADED_BEGIN(cls, Singleton<DownloadQueue>)
@@ -161,6 +179,8 @@ namespace nl {
             ADD_METHOD(cls, DownloadQueue, pageStatusAndBringFirst);
             ADD_METHOD(cls, DownloadQueue, startDownload);
             ADD_METHOD(cls, DownloadQueue, stopDownload);
+            ADD_METHOD(cls, DownloadQueue, save);
+            ADD_METHOD(cls, DownloadQueue, restore);
         ON_LOADED_END
     CLASS_END
 }

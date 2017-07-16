@@ -12,11 +12,14 @@
 #include <core/Ref.h>
 #include <core/Array.h>
 #include <core/Callback.h>
+#include <core/Data.h>
 #include "../nl_define.h"
 
 using namespace hicore;
 
 namespace nl {
+    class Shop;
+
     CLASS_BEGIN_N(SettingItem, RefObject)
     public:
         enum _ItemType {
@@ -93,6 +96,10 @@ namespace nl {
         map<string, Variant> values;
         Variant parseJson(void *node);
 
+        Shop *shop;
+
+        friend class Shop;
+
     public:
 
         static const StringName NOTIFICATION_OPEN_WEB_VIEW;
@@ -120,6 +127,8 @@ namespace nl {
 
         EVENT(void, process);
 
+        METHOD Ref<Data> file(const char *filename);
+
         METHOD void openWebView(const string &url, const string &name, const RefCallback &on_complete);
 
     protected:
@@ -134,6 +143,7 @@ namespace nl {
             ADD_METHOD(cls, Settings, find);
             ADD_METHOD(cls, Settings, set);
             ADD_METHOD(cls, Settings, openWebView);
+            ADD_METHOD(cls, Settings, file);
         ON_LOADED_END
     CLASS_END
 }

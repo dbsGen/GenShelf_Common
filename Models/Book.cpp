@@ -215,6 +215,7 @@ void Book::removeBook() {
     if (shop) {
         for (map<string, Variant>::iterator it = chapters->begin(), _e = chapters->end(); it != _e; ++it) {
             shop->cancelDownload(it->second.get<Chapter>());
+            shop->removeDownload(it->second.get<Chapter>());
         }
     }
     string path = FileSystem::getInstance()->getStoragePath() + "/local_books/" + md5(url.c_str(), url.size());

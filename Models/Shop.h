@@ -250,6 +250,7 @@ namespace nl {
         METHOD int collect(Book *book, Chapter *chapter);
         METHOD static int download(Book *book, Chapter *chapter);
         METHOD static void cancelDownload(Chapter *chapter);
+        METHOD static void removeDownload(Chapter *chapter);
 
         METHOD int like(Book *book);
 

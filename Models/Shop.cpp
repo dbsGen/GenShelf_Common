@@ -596,10 +596,15 @@ void Shop::cancelDownload(Chapter *chapter) {
     DownloadQueue::getInstance()->stopDownload(chapter);
 }
 
+void Shop::removeDownload(Chapter *chapter) {
+    DownloadQueue::getInstance()->removeDownload(chapter);
+}
+
 const Ref<Settings> &Shop::getSettings() {
     if (isLocalize() && !settings) {
         
         settings = new Settings;
+        settings->shop = this;
         
         if (!script) {
             setupScript();

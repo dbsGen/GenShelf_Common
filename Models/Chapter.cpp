@@ -161,3 +161,11 @@ void Chapter::setLastIndex(int idx) const {
     sprintf(index_str, "%d", idx);
     KeyValue::set(key, index_str);
 }
+
+void Chapter::downloadingChapters(const RefArray &books, const RefArray &chapters) {
+    const map<string, Ref<DownloadChapter> > &chs = DownloadQueue::getInstance()->getChapters();
+    for (auto it = chs.begin(), _e = chs.end(); it != _e; ++it) {
+        books->push_back(it->second->getBook());
+        chapters->push_back(it->second->getChapter());
+    }
+}

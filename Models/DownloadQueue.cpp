@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <utils/NotificationCenter.h>
 #include "DownloadQueue.h"
+#include <utils/FileSystem.h>
+#include "Shop.h"
 
 using namespace nl;
 using namespace hirender;
@@ -14,6 +16,51 @@ const StringName &DownloadPage::NOTIFICATION_STATUS("PAGE_STATUS");
 const StringName &DownloadChapter::NOTIFICATION_STATUS("CHAPTER_STATUS");
 const StringName &DownloadChapter::NOTIFICATION_PERCENT("CHAPTER_PERCENT");
 const StringName &DownloadChapter::NOTIFICATION_PAGE_COUNT("CHAPTER_PAGE_COUNT");
+
+namespace nl {
+
+    CLASS_BEGIN_TN(DownloadData, Model, 1, DownloadData)
+
+        DEFINE_STRING(book_url, BookUrl);
+        DEFINE_STRING(chapter_url, ChapterUrl);
+
+    public:
+        static void registerFields() {
+            Model<DownloadData>::registerFields();
+            ADD_FILED(DownloadData, book_url, BookUrl, false);
+            ADD_FILED(DownloadData, chapter_url, ChapterUrl, false);
+        }
+
+        _FORCE_INLINE_ static RefArray all() {
+            return query()->results();
+        }
+
+        static Ref<DownloadData> find(const Ref<Book> &book, const Ref<Chapter> &chapter) {
+            RefArray arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
+            if (arr.size() > 0) {
+                return arr.at(0);
+            }
+            return Ref<DownloadData>::null();
+        }
+        static void del(const Ref<Book> &book, const Ref<Chapter> &chapter) {
+            RefArray arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
+            if (arr.size() > 0) {
+                Ref<DownloadData> data = arr.at(0);
+                data->remove();
+            }
+        }
+        static void ins(const Ref<Book> &book, const Ref<Chapter> &chapter) {
+            if (!find(book, chapter)) {
+                DownloadData *data = new DownloadData;
+                data->setBookUrl(book->getUrl());
+                data->setChapterUrl(chapter->getUrl());
+                data->save();
+                delete data;
+            }
+        }
+
+    CLASS_END
+}
 
 void DownloadPage::start() {
     if (status != DownloadQueue::StatusNone) return;
@@ -63,6 +110,10 @@ void DownloadPage::stop() {
 }
 
 DownloadPage::DownloadPage() : client(NULL), status(DownloadQueue::StatusNone) {
+
+}
+
+DownloadPage::~DownloadPage() {
 
 }
 
@@ -159,9 +210,14 @@ void DownloadChapter::start() {
         pointer_vector vs{&v};
         reader->apply("process", vs);
     }else {
+        bool complete = true;
         for (auto it = pages.begin(), _e = pages.end(); it != _e; ++it) {
-            queue->pushPage(*it->second);
+            if (it->second->getStatus() == DownloadQueue::StatusNone) {
+                queue->pushPage(*it->second);
+                complete = false;
+            }
         }
+        setStatus(complete ? DownloadQueue::StatusComplete : DownloadQueue::StatusLoading);
     }
 }
 
@@ -187,6 +243,7 @@ void DownloadChapter::checkStatus() {
         bool complete = true;
         bool  has_failed = false;
         int count = 0;
+        LOG(i, "page count %d - %d", page_count, complete_count);
         for (int i = 0; i < page_count; ++i) {
             auto it = pages.find(i);
             if (it == pages.end()) {
@@ -197,6 +254,8 @@ void DownloadChapter::checkStatus() {
                     has_failed = true;
                 }else if (page->status == DownloadQueue::StatusComplete) {
                     count++;
+                }else {
+                    complete = false;
                 }
             }
         }
@@ -212,6 +271,12 @@ void DownloadChapter::checkStatus() {
                 setStatus(DownloadQueue::StatusFailed);
             }else {
                 setStatus(DownloadQueue::StatusComplete);
+                DownloadData::del(book, chapter);
+            }
+            if (queue->current_chapter == this) {
+                queue->cache_chapter = queue->current_chapter;
+                queue->current_chapter = nullptr;
+                queue->checkChaptersQueue();
             }
         }
     }else {
@@ -225,6 +290,10 @@ void DownloadChapter::checkStatus() {
         }
         old_downloaded = i;
     }
+}
+
+const map<string, Ref<DownloadChapter> >& DownloadQueue::getChapters() {
+    return chapters;
 }
 
 int DownloadQueue::pageCount(Chapter *chapter) {
@@ -342,7 +411,6 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                         }else {
                             dp->status = StatusNone;
                             complete = false;
-                            pushPage(dp);
                         }
                         dc->pages[i] = dp;
                     }
@@ -362,6 +430,9 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
             if (dc->status != StatusComplete) {
                 chapters_queue.push_back(dc);
                 checkChaptersQueue();
+                DownloadData::ins(dc->book, dc->chapter);
+            }else {
+                DownloadData::del(dc->book, dc->chapter);
             }
             return ResultStart;
         }else {
@@ -382,6 +453,10 @@ void DownloadQueue::stopDownload(Chapter *chapter) {
     if (it != chapters.end()) {
         it->second->stop();
     }
+}
+
+void DownloadQueue::removeDownload(Chapter *chapter) {
+    chapters.erase(chapter->getUrl());
 }
 
 void DownloadQueue::pushPage(DownloadPage *page) {
@@ -419,5 +494,42 @@ void DownloadQueue::checkPageQueue() {
     }
 }
 
+void DownloadQueue::save() {
+
+}
+
+void DownloadQueue::restore() {
+
+}
+
 DownloadQueue::DownloadQueue() : current_chapter(NULL), current_page(NULL) {
+    loadAll();
+}
+
+void DownloadQueue::loadAll() {
+    RefArray arr = DownloadData::all();
+    for (auto it = arr->begin(), _e = arr->end(); it != _e; ++it) {
+        Ref<DownloadData> data = *it;
+        string path = FileSystem::getInstance()->getStoragePath();
+        path += "/local_books/";
+        path += md5(data->getBookUrl().c_str(), data->getBookUrl().size());
+        Book *book = Book::parse(path);
+        bool will_delete = false;
+
+        if (book) {
+            string chapter_path = path + '/';
+            chapter_path += md5(data->getChapterUrl().c_str(), data->getChapterUrl().size());
+            Chapter *chapter = Chapter::parse(chapter_path);
+            if (chapter) {
+                startDownload(book, chapter);
+            }else {
+                will_delete = true;
+            }
+        }else {
+            will_delete = true;
+        }
+        if (will_delete) {
+            data->remove();
+        }
+    }
 }

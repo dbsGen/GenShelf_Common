@@ -91,6 +91,7 @@ namespace nl {
         METHOD void cachePages(const RefArray &pages) const;
         METHOD int lastIndex() const;
         METHOD void setLastIndex(int idx) const;
+        METHOD void stopDownload();
 
         METHOD static void downloadingChapters(const RefArray &books, const RefArray &chapters);
 
@@ -114,6 +115,7 @@ namespace nl {
             ADD_METHOD(cls, Chapter, lastIndex);
             ADD_METHOD(cls, Chapter, setLastIndex);
             ADD_METHOD(cls, Chapter, downloadingChapters);
+            ADD_METHOD(cls, Chapter, stopDownload);
         ON_LOADED_END
     CLASS_END
 }

@@ -63,11 +63,13 @@ namespace nl {
 }
 
 void DownloadPage::start() {
-    if (status != DownloadQueue::StatusNone) return;
+    if (status == DownloadQueue::StatusComplete ||
+            status == DownloadQueue::StatusLoading) return;
     const string &url = page->getPicture();
     client = new_t(HTTPClient, url);
     client->setDelay(0.5);
-    client->setRetryCount(3);
+    client->setRetryCount(1);
+    client->setTimeout(10);
     client->setMethod(page->getMethod());
     client->setReadCache(true);
     const RefMap &map = page->getHeaders();
@@ -144,7 +146,8 @@ void DownloadChapter::pageRequestOver(DownloadPage *page) {
 }
 
 void DownloadChapter::stop() {
-    if (status == DownloadQueue::StatusLoading) {
+    if (status == DownloadQueue::StatusLoading ||
+            status == DownloadQueue::StatusWaiting) {
         if (reader) {
             reader->apply("stop");
         }
@@ -152,72 +155,76 @@ void DownloadChapter::stop() {
             queue->pausePage(*it->second);
         }
         queue->checkPageQueue();
-        setStatus(DownloadQueue::StatusNone);
+        setStatus(DownloadQueue::StatusPause);
     }
 }
 
 void DownloadChapter::start() {
-    if (status != DownloadQueue::StatusNone)
-        return;
-    if (!reader) {
-        reader = new_t(Reader);
-        shop->setupReader(reader);
-    }
+    if (status == DownloadQueue::StatusNone ||
+            status == DownloadQueue::StatusWaiting ||
+            status == DownloadQueue::StatusPause ||
+            status == DownloadQueue::StatusFailed) {
 
-    if (pages.size() == 0) {
-        reader->setOnPageCount(C([=](bool success, int count){
-            if (success) {
-                page_count = count;
-                if (page_count == complete_count) {
-                    setStatus(DownloadQueue::StatusComplete);
+        if (!reader) {
+            reader = new_t(Reader);
+            shop->setupReader(reader);
+        }
+
+        if (pages.size() == 0) {
+            reader->setOnPageCount(C([=](bool success, int count){
+                if (success) {
+                    page_count = count;
+                    if (page_count == complete_count) {
+                        setStatus(DownloadQueue::StatusComplete);
+                    }
+                    if (page_count == pages.size()) {
+                        saveChapterInfo();
+                    }
+                    variant_vector vs{chapter, count};
+                    NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs);
+                }else {
+                    setStatus(DownloadQueue::StatusFailed);
                 }
-                if (page_count == pages.size()) {
+            }));
+            reader->setOnPageLoaded(C([=](bool success, int page_idx, const Ref<Page> &page){
+                if (success) {
+                    DownloadPage *dp = new DownloadPage;
+                    dp->page = page;
+                    dp->index = page_idx;
+                    dp->chapter = this;
+                    dp->status = DownloadQueue::StatusNone;
+                    pages[page_idx] = dp;
+                    string pic_path = this->book->picturePath(*chapter, page_idx);
+                    if (access(pic_path.c_str(), F_OK) != 0) {
+                        queue->pushPage(dp);
+                    }
+                }else {
+                    DownloadPage *dp = new DownloadPage;
+                    dp->page = page;
+                    dp->index = page_idx;
+                    dp->chapter = this;
+                    dp->status = DownloadQueue::StatusFailed;
+                    pages[page_idx] = dp;
+                    checkStatus();
+                }
+                if (page_count != 0 && page_count == pages.size()) {
                     saveChapterInfo();
                 }
-                variant_vector vs{chapter, count};
-                NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs);
-            }else {
-                setStatus(DownloadQueue::StatusFailed);
-            }
-        }));
-        reader->setOnPageLoaded(C([=](bool success, int page_idx, const Ref<Page> &page){
-            if (success) {
-                DownloadPage *dp = new DownloadPage;
-                dp->page = page;
-                dp->index = page_idx;
-                dp->chapter = this;
-                dp->status = DownloadQueue::StatusNone;
-                pages[page_idx] = dp;
-                string pic_path = this->book->picturePath(*chapter, page_idx);
-                if (access(pic_path.c_str(), F_OK) != 0) {
-                    queue->pushPage(dp);
+            }));
+            setStatus(DownloadQueue::StatusLoading);
+            Variant v(chapter);
+            pointer_vector vs{&v};
+            reader->apply("process", vs);
+        }else {
+            bool complete = true;
+            for (auto it = pages.begin(), _e = pages.end(); it != _e; ++it) {
+                if (it->second->getStatus() != DownloadQueue::StatusComplete) {
+                    queue->pushPage(*it->second);
+                    complete = false;
                 }
-            }else {
-                DownloadPage *dp = new DownloadPage;
-                dp->page = page;
-                dp->index = page_idx;
-                dp->chapter = this;
-                dp->status = DownloadQueue::StatusFailed;
-                pages[page_idx] = dp;
-                checkStatus();
             }
-            if (page_count != 0 && page_count == pages.size()) {
-                saveChapterInfo();
-            }
-        }));
-        setStatus(DownloadQueue::StatusLoading);
-        Variant v(chapter);
-        pointer_vector vs{&v};
-        reader->apply("process", vs);
-    }else {
-        bool complete = true;
-        for (auto it = pages.begin(), _e = pages.end(); it != _e; ++it) {
-            if (it->second->getStatus() == DownloadQueue::StatusNone) {
-                queue->pushPage(*it->second);
-                complete = false;
-            }
+            setStatus(complete ? DownloadQueue::StatusComplete : DownloadQueue::StatusLoading);
         }
-        setStatus(complete ? DownloadQueue::StatusComplete : DownloadQueue::StatusLoading);
     }
 }
 
@@ -387,7 +394,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                 const RefArray &pages = chapter->getPages();
                 int size = pages.size();
                 if (size == 0) {
-                    dc->status = StatusNone;
+                    dc->status = StatusWaiting;
                     int i = 0;
                     for (; i < 999; ++i) {
                         string pic_path = book->picturePath(chapter, i);
@@ -409,7 +416,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                             dp->status = StatusComplete;
                             ++complete_count;
                         }else {
-                            dp->status = StatusNone;
+                            dp->status = StatusWaiting;
                             complete = false;
                         }
                         dc->pages[i] = dp;
@@ -417,14 +424,14 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                     if (complete) {
                         dc->status = StatusComplete;
                     }else {
-                        dc->status = StatusNone;
+                        dc->status = StatusWaiting;
                     }
                     dc->page_count = size;
                     dc->complete_count = complete_count;
                 }
                 closedir(dir);
             }else {
-                dc->status = StatusNone;
+                dc->status = StatusWaiting;
             }
             chapters[chapter->getUrl()] = dc;
             if (dc->status != StatusComplete) {
@@ -436,8 +443,10 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
             }
             return ResultStart;
         }else {
-            if (it->second->status == StatusNone) {
-                it->second->start();
+            if (it->second->status == StatusPause || it->second->status == StatusFailed) {
+                chapters_queue.push_back(*it->second);
+                it->second->setStatus(StatusWaiting);
+                checkChaptersQueue();
                 return ResultStart;
             }else {
                 return ResultDownloading;
@@ -452,6 +461,11 @@ void DownloadQueue::stopDownload(Chapter *chapter) {
     auto it = chapters.find(chapter->getUrl());
     if (it != chapters.end()) {
         it->second->stop();
+        chapters_queue.remove(chapter);
+        if (current_chapter == *it->second) {
+            current_chapter = NULL;
+            checkChaptersQueue();
+        }
     }
 }
 
@@ -475,6 +489,9 @@ void DownloadQueue::pausePage(DownloadPage *page) {
                 it = pages_queue.erase(it);
             }else ++it;
         }
+    }
+    if (page->getStatus() == DownloadQueue::StatusLoading) {
+        page->setStatus(DownloadQueue::StatusPause);
     }
 }
 

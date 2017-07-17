@@ -141,7 +141,8 @@ namespace nl {
             StatusLoading = 1,
             StatusComplete = 2,
             StatusPause = 3,
-            StatusFailed
+            StatusFailed,
+            StatusWaiting
         };
         enum _Result {
             ResultStart = 0,

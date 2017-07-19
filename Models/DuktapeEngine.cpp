@@ -13,7 +13,7 @@
 using namespace nl;
 
 DuktapeEngine::DuktapeEngine() {
-    context = duk_create_heap(NULL, NULL, NULL, NULL,
+    context = duk_create_heap(NULL, NULL, NULL, this,
                               &DuktapeEngine::fatal_handler);
 }
 

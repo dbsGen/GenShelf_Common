@@ -55,7 +55,7 @@ Variant DuktapeEngine::process(void *context) {
 
 Variant DuktapeEngine::eval(const char *script) {
     duk_context *ctx = (duk_context*)context;
-    duk_eval_string(ctx, script);
+    duk_peval_string(ctx, script);
     
     Variant ret = process(ctx);
     

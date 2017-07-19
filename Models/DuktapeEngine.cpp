@@ -7,6 +7,7 @@
 //
 
 #include "DuktapeEngine.h"
+#include <core/Data.h>
 #include <core/Array.h>
 #include <duktape/duktape.h>
 
@@ -55,12 +56,25 @@ Variant DuktapeEngine::process(void *context) {
 
 Variant DuktapeEngine::eval(const char *script) {
     duk_context *ctx = (duk_context*)context;
-    duk_eval_string(ctx, script);
+    duk_peval_string(ctx, script);
     
     Variant ret = process(ctx);
     
     duk_pop(ctx);
     
+    return ret;
+}
+
+Variant DuktapeEngine::fileEval(const string &filepath) {
+    duk_context *ctx = (duk_context*)context;
+
+    FileData data(filepath);
+    duk_peval_string(ctx, data.text());
+
+    Variant ret = process(ctx);
+
+    duk_pop(ctx);
+
     return ret;
 }
 

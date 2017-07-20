@@ -34,11 +34,10 @@ void Chapter::saveConfig(const string &path) {
     if (pages.size()) {
         JSONNODE *pages_node = json_new(JSON_ARRAY);
         json_set_name(pages_node, "pages");
-        JSONNODE_ITERATOR pit = json_begin(pages_node);
         for (auto it = pages->begin(), _e = pages->end(); it != _e; ++it) {
             Ref<Page> page = *it;
             JSONNODE *node = page->unparse();
-            pit = json_insert(pages_node, pit, node);
+            json_push_back(pages_node, node);
         }
         it = json_insert(node, it, pages_node);
     }
@@ -118,14 +117,18 @@ RefArray Chapter::cachedPages() const {
     RefArray pages;
     if (!val.empty()) {
         JSONNODE *pages_node = json_parse(val.c_str());
-        json_index_t size = json_size(pages_node);
-        for (json_index_t i = 0; i < size; ++i) {
-            JSONNODE *page_node = json_at(pages_node, i);
-            Ref<Page> page = new_t(Page);
-            page->parse(page_node);
-            pages->push_back(page);
+        if (pages_node) {
+            json_index_t size = json_size(pages_node);
+            for (json_index_t i = 0; i < size; ++i) {
+                JSONNODE *page_node = json_at(pages_node, i);
+                if (page_node) {
+                    Ref<Page> page = new_t(Page);
+                    page->parse(page_node);
+                    pages->push_back(page);
+                }
+            }
+            json_delete(pages_node);
         }
-        json_delete(pages_node);
     }
     return pages;
 }

@@ -66,6 +66,7 @@ void DownloadPage::start() {
     if (status == DownloadQueue::StatusComplete ||
             status == DownloadQueue::StatusLoading) return;
     const string &url = page->getPicture();
+    LOG(i, "start download %d %s", index, url.c_str());
     client = new_t(HTTPClient, url);
     client->setDelay(0.5);
     client->setRetryCount(1);
@@ -82,6 +83,7 @@ void DownloadPage::start() {
     }
     client->setOnComplete(C([=](HTTPClient *c, const string &path){
         if (c->getError().empty()) {
+            LOG(i, "complete download %d %s", this->index, url.c_str());
             DownloadChapter *dc = this->chapter;
             string npath = dc->book->picturePath(*dc->chapter, this->index);
             FILE *old_file = fopen(path.c_str(), "r");
@@ -170,7 +172,18 @@ void DownloadChapter::start() {
             shop->setupReader(reader);
         }
 
-        if (pages.size() == 0) {
+        bool skip_read = true;
+        if (pages.size() == 0 || page_count == 0) {
+            skip_read = false;
+        }else {
+            for (int i = 0; i < page_count; ++i) {
+                if (pages.find(i) == pages.end()) {
+                    skip_read = false;
+                    break;
+                }
+            }
+        }
+        if (!skip_read) {
             reader->setOnPageCount(C([=](bool success, int count){
                 if (success) {
                     page_count = count;

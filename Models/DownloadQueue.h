@@ -57,6 +57,7 @@ namespace nl {
     CLASS_BEGIN_N(DownloadChapter, RefObject)
 
         map<int, Ref<DownloadPage> >  pages;
+        vector<Ref<DownloadPage> > cachePages;
         int status;
         Ref<Book> book;
         Ref<Chapter> chapter;

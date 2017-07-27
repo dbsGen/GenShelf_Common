@@ -9,6 +9,12 @@ using namespace nl;
 RefArray ArtBasket::arts;
 
 void ArtBasket::addBook(const Ref<Book> &book) {
+    for (auto it = arts->begin(), _e = arts->end(); it != _e; ++it) {
+        Ref<Art> art = *it;
+        if (art->getType() == 1 && art->getUrl() == book->getUrl()) {
+            return;
+        }
+    }
     Ref<Art> art = new Art;
     art->setUrl(book->getUrl());
     art->setName(book->getName());
@@ -19,6 +25,12 @@ void ArtBasket::addBook(const Ref<Book> &book) {
 }
 
 void ArtBasket::addChapter(const Ref<Book> &book, const Ref<Chapter> &chapter) {
+    for (auto it = arts->begin(), _e = arts->end(); it != _e; ++it) {
+        Ref<Art> art = *it;
+        if (art->getType() == 0 && art->getChapterUrl() == chapter->getUrl()) {
+            return;
+        }
+    }
     Ref<Art> art = new Art;
     art->setName(book->getName());
 

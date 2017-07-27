@@ -82,6 +82,16 @@ namespace nl {
         }
         PROPERTY(chapter_name, getChapterName, setChapterName)
 
+    protected:
+        ON_LOADED_BEGIN(cls, RefObject)
+            ADD_PROPERTY(cls, "type", ADD_METHOD(cls, Art, getType), ADD_METHOD(cls, Art, setType));
+            ADD_PROPERTY(cls, "shop_id", ADD_METHOD(cls, Art, getShopId), ADD_METHOD(cls, Art, setShopId));
+            ADD_PROPERTY(cls, "url", ADD_METHOD(cls, Art, getUrl), ADD_METHOD(cls, Art, setUrl));
+            ADD_PROPERTY(cls, "name", ADD_METHOD(cls, Art, getName), ADD_METHOD(cls, Art, setName));
+            ADD_PROPERTY(cls, "thumb", ADD_METHOD(cls, Art, getThumb), ADD_METHOD(cls, Art, setThumb));
+            ADD_PROPERTY(cls, "chapter_url", ADD_METHOD(cls, Art, getChapterUrl), ADD_METHOD(cls, Art, setChapterUrl));
+            ADD_PROPERTY(cls, "chapter_name", ADD_METHOD(cls, Art, getChapterName), ADD_METHOD(cls, Art, setChapterName));
+        ON_LOADED_END
     CLASS_END
 
     CLASS_BEGIN_N(ArtBasket, RefObject)
@@ -97,6 +107,12 @@ namespace nl {
             return arts;
         }
 
+    protected:
+        ON_LOADED_BEGIN(cls, RefObject)
+            ADD_METHOD(cls, ArtBasket, addBook);
+            ADD_METHOD(cls, ArtBasket, addChapter);
+            ADD_METHOD(cls, ArtBasket, getArts);
+        ON_LOADED_END
     CLASS_END
 }
 

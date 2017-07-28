@@ -82,6 +82,9 @@ namespace nl {
         }
         PROPERTY(chapter_name, getChapterName, setChapterName)
 
+        METHOD string html();
+        METHOD static RefArray parse(const string &content);
+
     protected:
         ON_LOADED_BEGIN(cls, RefObject)
             ADD_PROPERTY(cls, "type", ADD_METHOD(cls, Art, getType), ADD_METHOD(cls, Art, setType));
@@ -91,6 +94,8 @@ namespace nl {
             ADD_PROPERTY(cls, "thumb", ADD_METHOD(cls, Art, getThumb), ADD_METHOD(cls, Art, setThumb));
             ADD_PROPERTY(cls, "chapter_url", ADD_METHOD(cls, Art, getChapterUrl), ADD_METHOD(cls, Art, setChapterUrl));
             ADD_PROPERTY(cls, "chapter_name", ADD_METHOD(cls, Art, getChapterName), ADD_METHOD(cls, Art, setChapterName));
+            ADD_METHOD(cls, Art, html);
+            ADD_METHOD(cls, Art, parse);
         ON_LOADED_END
     CLASS_END
 

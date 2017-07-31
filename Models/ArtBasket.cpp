@@ -82,7 +82,6 @@ RefArray Art::parse(const string &content) {
     XMLDocument doc;
     doc.initialize(Data::fromString("<p>"+content+"</p>"), XMLDocument::XML);
     const RefArray &cs = doc.getRoot()->getChildren();
-    LOG(i, "get children size %d", cs.size());
     RefArray rets;
     for (auto it = cs->begin(), _e = cs->end(); it != _e; ++it) {
         const Ref<XMLNode> &node = *it;

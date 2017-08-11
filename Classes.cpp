@@ -14,7 +14,6 @@
 #include <script/java/JScript.h>
 #include <script/java/JClass.h>
 #include <script/java/JInstance.h>
-#include <utils/animation/Animator.h>
 
 using namespace hicore;
 

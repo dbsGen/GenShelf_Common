@@ -84,7 +84,7 @@ RefArray Art::parse(const string &content) {
     if (!doc.getRoot()) return RefArray();
     RefArray bodys = doc.xpath("//content");
     if (bodys.size() == 0) return RefArray();
-    const RefArray &cs = bodys.at(0)->cast_to<XMLNode>()->getChildren();
+    const RefArray &cs = bodys.at(0).get<XMLNode>()->getChildren();
     RefArray rets;
     for (auto it = cs->begin(), _e = cs->end(); it != _e; ++it) {
         const Ref<XMLNode> &node = *it;

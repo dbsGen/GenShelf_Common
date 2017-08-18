@@ -62,9 +62,9 @@ const Ref<Settings> & Library::settings() {
 
 void Reader::loadedPage(int idx, bool success, const Ref<nl::Page> &page) {
     if (pages.size() <= idx) {
-        pages.vec()->resize(idx+1);
+        pages.vec().resize(idx+1);
     }
-    pages.vec()->operator[](idx) = page;
+    pages.vec().operator[](idx) = page;
     if (on_page_loaded) {
         on_page_loaded(success, idx, page);
     }
@@ -116,7 +116,7 @@ const RefArray &Shop::getLocalShops() {
                     Shop *shop = parse(path + ent->d_name + '/');
                     if (shop) {
                         shop->is_localize = true;
-                        local_shops.vec()->push_back(Ref<Shop>(shop));
+                        local_shops->push_back(Ref<Shop>(shop));
                     }
                 }
             }
@@ -228,7 +228,7 @@ RefArray Shop::parseShops(const string &path) {
         JSONNODE *child = json_at(node, i);
         JSONNODE *id_node = json_get(child, "id");
         if (id_node) {
-            arr.vec()->push_back(Ref<Shop>(nl::Shop::parseJson(child)));
+            arr->push_back(Ref<Shop>(nl::Shop::parseJson(child)));
         }
     }
     json_delete(node);
@@ -414,7 +414,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
             }
         }
         if (!found) {
-            local_shops.vec()->push_back(shop);
+            local_shops->push_back(shop);
         }
         shop->is_localize = true;
         vector<Variant> vs{shop};
@@ -532,11 +532,11 @@ void Shop::install() {
 
 void Shop::remove() {
     clearScript();
-    auto it = local_shops->begin();
-    while (it != local_shops->end()) {
+    auto it = local_shops.vec().begin();
+    while (it != local_shops.vec().end()) {
         Ref<Shop> shop = *it;
         if (shop->getIdentifier() == getIdentifier()) {
-            it = local_shops.vec()->erase(it);
+            it = local_shops.vec().erase(it);
         }else {
             ++it;
         }

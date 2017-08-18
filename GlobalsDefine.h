@@ -11,7 +11,7 @@
 
 #define local(str) NSLocalizedString(@#str, @"")
 
-#define IS_DEBUG true
+#define IS_DEBUG false
 
 #define RED_COLOR [UIColor colorWithRed:0xea/255.0 green:0x43/255.0 blue:0x35/255.0 alpha:1]
 #define BLUE_COLOR [UIColor colorWithRed:80.0/255 green:133.0/255 blue:249.0/255 alpha:1]

@@ -72,7 +72,8 @@ string Encoder::decode(const hicore::Ref<hicore::Data> &data, const char *encodi
         char *outstr = oristr;
         
         iconv(cd, (char**)&instr, &inlen, &outstr, &outlen);
-        
+
+        outstr[0] = NULL;
         string ret(oristr);
         
         free(oristr);

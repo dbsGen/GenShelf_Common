@@ -51,12 +51,14 @@ namespace nl {
             apply("load", vs);
         }
         METHOD Ref<Data> file(const char *filename);
+        METHOD void message(const string &msg) const;
 
     protected:
         ON_LOADED_BEGIN(cls, RefObject)
             ADD_METHOD(cls, Library, settings);
             ADD_METHOD(cls, Library, applyLoad);
             ADD_METHOD(cls, Library, file);
+            ADD_METHOD(cls, Library, message);
         ON_LOADED_END
     CLASS_END
 
@@ -113,6 +115,7 @@ namespace nl {
         METHOD void collect(Chapter *chapter, Book *book);
     
         METHOD Ref<Data> file(const char *filename);
+        METHOD void message(const string &msg) const;
 
         EVENT(void, process, const Ref<Chapter> &chapter);
         EVENT(void, reloadPage, const Ref<Page> &page, int idx);
@@ -129,6 +132,7 @@ namespace nl {
             ADD_METHOD(cls, Reader, settings);
             ADD_METHOD(cls, Reader, collect);
             ADD_METHOD(cls, Reader, file);
+            ADD_METHOD(cls, Reader, message);
         ON_LOADED_END
     CLASS_END
 
@@ -257,6 +261,7 @@ namespace nl {
         METHOD void install();
         METHOD void remove();
         METHOD Ref<Data> file(const char *filename);
+        METHOD void message(const string &msg) const;
 
     protected:
         ON_LOADED_BEGIN(cls, RefObject)
@@ -287,6 +292,7 @@ namespace nl {
             ADD_METHOD(cls, Shop, install);
             ADD_METHOD(cls, Shop, remove);
             ADD_METHOD(cls, Shop, file);
+            ADD_METHOD(cls, Shop, message);
         ON_LOADED_END
     CLASS_END
     
@@ -295,6 +301,12 @@ namespace nl {
     }
     _FORCE_INLINE_ Ref<Data> Reader::file(const char *filename) {
         return shop ? shop->file(filename) : Ref<Data>::null();
+    }
+    _FORCE_INLINE_ void Library::message(const string &msg) const {
+        if (shop) shop->message(msg);
+    }
+    _FORCE_INLINE_ void Reader::message(const string &msg) const {
+        if (shop) shop->message(msg);
     }
 }
 

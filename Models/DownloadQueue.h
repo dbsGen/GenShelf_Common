@@ -56,8 +56,8 @@ namespace nl {
 
     CLASS_BEGIN_N(DownloadChapter, RefObject)
 
-        map<int, Ref<DownloadPage> >  pages;
-        vector<Ref<DownloadPage> > cachePages;
+        unordered_map<int, Ref<DownloadPage> >  pages;
+        vector<Ref<DownloadPage> > cache_pages;
         int status;
         Ref<Book> book;
         Ref<Chapter> chapter;
@@ -92,6 +92,7 @@ namespace nl {
          * CHAPTER_PAGE_COUNT
          * @param chapter Chapter*,
          * @param count int
+         * @param completed int
          */
         static const StringName &NOTIFICATION_PAGE_COUNT;
 
@@ -158,6 +159,7 @@ namespace nl {
         const map<string, Ref<DownloadChapter> > &getChapters();
 
         METHOD int pageCount(Chapter *chapter);
+        METHOD int completeCount(Chapter *chapter);
         METHOD int chapterOldDownloaded(Chapter *chapter);
         METHOD float chapterPercent(Chapter *chapter);
         METHOD Status chapterStatus(Chapter *chapter);
@@ -174,6 +176,7 @@ namespace nl {
     protected:
         ON_LOADED_BEGIN(cls, Singleton<DownloadQueue>)
             ADD_METHOD(cls, DownloadQueue, pageCount);
+            ADD_METHOD(cls, DownloadQueue, completeCount);
             ADD_METHOD(cls, DownloadQueue, chapterOldDownloaded);
             ADD_METHOD(cls, DownloadQueue, chapterPercent);
             ADD_METHOD(cls, DownloadQueue, chapterStatus);

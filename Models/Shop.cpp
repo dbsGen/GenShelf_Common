@@ -657,3 +657,7 @@ Ref<Data> Shop::file(const char *filename) {
     return new FileData(path.c_str());
 }
 
+void Shop::message(const string &msg) const {
+    variant_vector vs{msg};
+    NotificationCenter::getInstance()->trigger(Settings::NOTIFICATION_SHOW_MESSAGE, &vs);
+}

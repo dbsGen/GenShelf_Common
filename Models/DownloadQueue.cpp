@@ -193,7 +193,7 @@ void DownloadChapter::start() {
                     if (page_count == pages.size()) {
                         saveChapterInfo();
                     }
-                    variant_vector vs{chapter, count};
+                    variant_vector vs{chapter, count, complete_count};
                     NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs);
                 }else {
                     setStatus(DownloadQueue::StatusFailed);
@@ -206,10 +206,16 @@ void DownloadChapter::start() {
                     dp->index = page_idx;
                     dp->chapter = this;
                     dp->status = DownloadQueue::StatusNone;
+                    int old_pages_count = pages.size();
                     pages[page_idx] = dp;
                     string pic_path = this->book->picturePath(*chapter, page_idx);
                     if (access(pic_path.c_str(), F_OK) != 0) {
                         queue->pushPage(dp);
+                    }
+                    if (page_count == 0 && old_pages_count < pages.size()) {
+                        int count = pages.size();
+                        variant_vector vs{chapter, count, complete_count};
+                        NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs);
                     }
                 }else {
                     DownloadPage *dp = new DownloadPage;
@@ -228,6 +234,7 @@ void DownloadChapter::start() {
             Variant v(chapter);
             pointer_vector vs{&v};
             reader->apply("process", vs);
+            LOG(i, "start process %s", chapter->getName().c_str());
         }else {
             bool complete = true;
             for (auto it = pages.begin(), _e = pages.end(); it != _e; ++it) {
@@ -262,20 +269,22 @@ void DownloadChapter::checkStatus() {
     if (page_count != 0) {
         bool complete = true;
         bool  has_failed = false;
-        int count = 0;
+        int count = old_downloaded;
         LOG(i, "page count %d - %d", page_count, complete_count);
         for (int i = 0; i < page_count; ++i) {
-            auto it = pages.find(i);
-            if (it == pages.end()) {
-                complete = false;
-            }else {
-                auto &page = it->second;
-                if (page->status == DownloadQueue::StatusFailed) {
-                    has_failed = true;
-                }else if (page->status == DownloadQueue::StatusComplete) {
-                    count++;
-                }else {
+            if (i >= old_downloaded) {
+                auto it = pages.find(i);
+                if (it == pages.end()) {
                     complete = false;
+                }else {
+                    auto &page = it->second;
+                    if (page->status == DownloadQueue::StatusFailed) {
+                        has_failed = true;
+                    }else if (page->status == DownloadQueue::StatusComplete) {
+                        count++;
+                    }else {
+                        complete = false;
+                    }
                 }
             }
         }
@@ -284,6 +293,8 @@ void DownloadChapter::checkStatus() {
             if (page_count) {
                 variant_vector vs{chapter, complete_count/(float)page_count};
                 NotificationCenter::getInstance()->trigger(NOTIFICATION_PERCENT, &vs);
+                variant_vector vs2{chapter, page_count, complete_count};
+                NotificationCenter::getInstance()->trigger(NOTIFICATION_PAGE_COUNT, &vs2);
             }
         }
         if (complete) {
@@ -325,6 +336,15 @@ int DownloadQueue::pageCount(Chapter *chapter) {
     }
 }
 
+int DownloadQueue::completeCount(Chapter *chapter) {
+    auto it = chapters.find(chapter->getUrl());
+    if (it == chapters.end()) {
+        return 0;
+    }else {
+        return it->second->complete_count;
+    }
+}
+
 int DownloadQueue::chapterOldDownloaded(Chapter *chapter) {
     auto it = chapters.find(chapter->getUrl());
     if (it == chapters.end()) {
@@ -336,7 +356,7 @@ int DownloadQueue::chapterOldDownloaded(Chapter *chapter) {
 
 float DownloadQueue::chapterPercent(Chapter *chapter) {
     auto it = chapters.find(chapter->getUrl());
-    if (it == chapters.end()) {
+    if (it == chapters.end() || it->second->page_count == 0) {
         return 0;
     }else {
         return it->second->complete_count / (float)it->second->page_count;
@@ -415,6 +435,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
                             break;
                         }
                     }
+                    dc->complete_count = i;
                     dc->old_downloaded = i;
                 }else {
                     bool complete = true;

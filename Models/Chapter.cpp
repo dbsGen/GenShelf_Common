@@ -106,6 +106,14 @@ int Chapter::oldDownloaded() {
     return DownloadQueue::getInstance()->chapterOldDownloaded(this);
 }
 
+int Chapter::pageCount() {
+    return DownloadQueue::getInstance()->pageCount(this);
+}
+
+int Chapter::completeCount() {
+    return DownloadQueue::getInstance()->completeCount(this);
+}
+
 void Chapter::bringFirst(int index) {
     DownloadQueue::getInstance()->pageStatusAndBringFirst(this, index);
 }

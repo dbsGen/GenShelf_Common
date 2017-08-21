@@ -19,6 +19,7 @@ using namespace hicore;
 using namespace hirender;
 
 const StringName Settings::NOTIFICATION_OPEN_WEB_VIEW("OPEN_WEB_VIEW");
+const StringName Settings::NOTIFICATION_SHOW_MESSAGE("SHOW_MSG");
 
 const Variant &SettingItem::getValue() {
     if (!value.empty()) {
@@ -292,7 +293,12 @@ void Settings::load(const string &path) {
     }
 }
 
-void Settings::openWebView(const string &url, const string &name, const RefCallback &on_complete) {
+void Settings::openWebView(const string &url, const string &name, const RefCallback &on_complete) const {
     variant_vector vs{url, name, on_complete};
     NotificationCenter::getInstance()->trigger(NOTIFICATION_OPEN_WEB_VIEW, &vs);
+}
+
+void Settings::message(const string &msg) const {
+    variant_vector vs{msg};
+    NotificationCenter::getInstance()->trigger(NOTIFICATION_SHOW_MESSAGE, &vs);
 }

@@ -85,6 +85,8 @@ namespace nl {
         METHOD int downloadStatus();
         METHOD int pageStatus(int index);
         METHOD int oldDownloaded();
+        METHOD int pageCount();
+        METHOD int completeCount();
         METHOD void bringFirst(int index);
 
         METHOD RefArray cachedPages() const;
@@ -109,6 +111,8 @@ namespace nl {
             ADD_METHOD(cls, Chapter, downloadStatus);
             ADD_METHOD(cls, Chapter, pageStatus);
             ADD_METHOD(cls, Chapter, oldDownloaded);
+            ADD_METHOD(cls, Chapter, pageCount);
+            ADD_METHOD(cls, Chapter, completeCount);
             ADD_METHOD(cls, Chapter, bringFirst);
             ADD_METHOD(cls, Chapter, cachedPages);
             ADD_METHOD(cls, Chapter, cachePages);

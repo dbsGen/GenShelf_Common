@@ -9,9 +9,6 @@ using namespace nl;
 
 const int History_count_per_page = 20;
 
-History::History() {
-
-}
 
 void History::visit(const Ref<Book> &book) {
     if (book && !book->getUrl().empty()) {

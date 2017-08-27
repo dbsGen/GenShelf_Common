@@ -21,7 +21,7 @@ namespace nl {
         DEFINE_STRING(url, Url)
 
     public:
-        History();
+        _FORCE_INLINE_ History() {}
         static void registerFields() {
             Model<History>::registerFields();
             ADD_FILED(History, content, Content, false);

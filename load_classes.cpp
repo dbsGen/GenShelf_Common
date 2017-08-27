@@ -16,6 +16,7 @@
 #include "Models/DuktapeEngine.h"
 #include "Utils/Encoder/Encoder.h"
 #include "Models/ArtBasket.h"
+#include "Models/History.h"
 #include <core/math/Type.h>
 
 void GS_load_classes() {
@@ -31,4 +32,5 @@ void GS_load_classes() {
     nl::KeyValue::getClass();
     nl::Art::getClass();
     nl::ArtBasket::getClass();
+    nl::History::getClass();
 }

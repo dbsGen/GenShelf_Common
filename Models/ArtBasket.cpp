@@ -4,7 +4,7 @@
 
 #include "ArtBasket.h"
 #include <utils/xml/XMLNode.h>
-#include <src/main/cpp/hirender/utils/xml/XMLDocument.h>
+#include <utils/xml/XMLDocument.h>
 
 using namespace nl;
 

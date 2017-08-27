@@ -14,6 +14,7 @@
 #include <script/java/JScript.h>
 #include <script/java/JClass.h>
 #include <script/java/JInstance.h>
+#include "Models/History.h"
 
 using namespace hicore;
 
@@ -27,6 +28,7 @@ void ClassDB::loadClasses() {
     class_loaders[h("hirender::NotificationCenter")] = (void*)&hirender::NotificationCenter::getClass;
     class_loaders[h("hicore::Map")] = (void*)&hicore::Map::getClass;
     class_loaders[h("hicore::Array")] = (void*)&hicore::Array::getClass;
+    class_loaders[h("nl::History")] = (void*)&nl::History::getClass;
 
 //    class_loaders[h("hirender::Animator")] = (void*)&hirender::Animator::getClass;
 //    class_loaders[h("hirender::AnimatorMethod")] = (void*)&hirender::AnimatorMethod::getClass;

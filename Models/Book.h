@@ -111,7 +111,7 @@ namespace nl {
         }
         PROPERTY(des, getDes, setDes);
         // url地址
-        METHOD _FORCE_INLINE_ const string &getUrl() {
+        METHOD _FORCE_INLINE_ const string &getUrl() const {
             return url;
         }
         METHOD _FORCE_INLINE_ void setUrl(const string &url) {
@@ -136,6 +136,8 @@ namespace nl {
         METHOD bool isLiked();
         static const map<string, Ref<Book> > &getLocalBooks();
         static Book *parse(const string &path);
+        static Book *parse(JSONNODE *node);
+        JSONNODE *unparse() const;
         METHOD _FORCE_INLINE_ const RefMap &getChapters() {
             return chapters;
         }

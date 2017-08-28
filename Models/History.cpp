@@ -27,7 +27,9 @@ void History::visit(const Ref<Book> &book) {
             json_free(str);
             json_delete(node);
         }
-        long long time = (long long)(Renderer::time() * 1000);
+        struct timeval tp;
+        gettimeofday(&tp, NULL);
+        long long time = static_cast<long long>(tp.tv_sec + tp.tv_usec * 1.0E-3);
         his->setDate(time);
         his->save();
     }

@@ -145,17 +145,18 @@ Book* Book::parse(JSONNODE *node) {
     return NULL;
 }
 
+struct BookCompare {
+    bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
+        return b1->getIndex() > b2->getIndex();
+    }
+};
+
 RefArray Book::localBooks() {
     variant_vector vs;
     const map<string, Ref<Book> > &local_books = Book::getLocalBooks();
     for (auto it = local_books.begin(), _e = local_books.end(); it != _e; ++it) {
         vs.push_back(it->second);
     }
-    struct BookCompare {
-        bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
-            return b1->getIndex() < b2->getIndex();
-        }
-    };
     sort(vs.begin(), vs.end(), BookCompare());
     return vs;
 }
@@ -166,11 +167,6 @@ RefArray Book::likedBooks() {
     for (auto it = liked_books.begin(), _e = liked_books.end(); it != _e; ++it) {
         vs.push_back(it->second);
     }
-    struct BookCompare {
-        bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
-            return b1->getIndex() < b2->getIndex();
-        }
-    };
     sort(vs.begin(), vs.end(), BookCompare());
     return vs;
 }
@@ -241,7 +237,7 @@ void Book::removeChapter(nl::Chapter *chapter) {
 
 void Book::convertLocal(bool just_like) {
     getLocalBooks();
-    if (local_books.find(url) == local_books.end()) {
+    if (just_like || local_books.find(url) == local_books.end()) {
         string path;
         if (just_like) {
             path = FileSystem::getInstance()->getStoragePath() + "/liked_books";
@@ -262,6 +258,29 @@ void Book::convertLocal(bool just_like) {
             remove(path.c_str());
         }
         JSONNODE *node = unparse();
+        if (just_like) {
+            static const string lc_string = "like_count";
+            int like_count = atoi(KeyValue::get(lc_string).c_str());
+            if (like_count == 0) {
+                like_count = liked_books.size();
+            }
+            json_push_back(node, json_new_i("index", like_count));
+            ++like_count;
+            char str[20];
+            sprintf(str, "%d", like_count);
+            KeyValue::set(lc_string, str);
+        }else {
+            static const string lc_string = "local_count";
+            int local_count = atoi(KeyValue::get(lc_string).c_str());
+            if (local_count == 0) {
+                local_count = local_books.size();
+            }
+            json_push_back(node, json_new_i("index", local_count));
+            ++local_count;
+            char str[20];
+            sprintf(str, "%d", local_count);
+            KeyValue::set(lc_string, str);
+        }
 
         FILE *file = fopen(path.c_str(), "wb");
         json_char *chs = json_write(node);
@@ -295,7 +314,6 @@ JSONNODE* Book::unparse() const {
     if (des.size()) {
         it = json_insert(node, it, json_new_a("des", des.c_str()));
     }
-    it = json_insert(node, it, json_new_i("index", local_books.size()));
     Map *map = *thumb_headers;
     JSONNODE *headers_node = json_new(JSON_NODE);
     for (auto hit = map->begin(), _e = map->end(); hit != _e; ++hit) {

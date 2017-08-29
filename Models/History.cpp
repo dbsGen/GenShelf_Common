@@ -29,7 +29,7 @@ void History::visit(const Ref<Book> &book) {
         }
         struct timeval tp;
         gettimeofday(&tp, NULL);
-        long long time = static_cast<long long>(tp.tv_sec + tp.tv_usec * 1.0E-3);
+        long long time = static_cast<long long>(tp.tv_sec * 1000 + tp.tv_usec * 1.0E-3);
         his->setDate(time);
         his->save();
     }

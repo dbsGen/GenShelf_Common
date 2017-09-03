@@ -120,11 +120,11 @@ namespace nl {
 
         Ref<DownloadChapter> cache_chapter;
         map<string, Ref<DownloadChapter> > chapters;
-        pointer_list chapters_queue;
-        pointer_list pages_queue;
+        list<Ref<DownloadChapter> > chapters_queue;
+        list<Ref<DownloadPage> > pages_queue;
 
-        DownloadChapter *current_chapter;
-        DownloadPage *current_page;
+        Ref<DownloadChapter> current_chapter;
+        Ref<DownloadPage> current_page;
 
         void checkChaptersQueue();
         void checkPageQueue();
@@ -167,7 +167,7 @@ namespace nl {
         METHOD Status pageStatusAndBringFirst(Chapter *chapter, int idx);
 
         METHOD Result startDownload(Book *book, Chapter *chapter);
-        METHOD void stopDownload(Chapter *chapter);
+        METHOD void stopDownload(const Ref<Chapter> &chapter);
         METHOD void removeDownload(Chapter *chapter);
 
         METHOD void save();

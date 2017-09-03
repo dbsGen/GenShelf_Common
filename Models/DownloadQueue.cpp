@@ -396,8 +396,8 @@ DownloadQueue::Status DownloadQueue::pageStatusAndBringFirst(Chapter *chapter, i
         if (pit == pages.end()) {
             return StatusNone;
         }else {
-            pages_queue.remove(*pit->second);
-            pages_queue.push_front(*pit->second);
+            pages_queue.remove(pit->second);
+            pages_queue.push_front(pit->second);
             return pit->second->status;
         }
     }
@@ -491,7 +491,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
     }
 }
 
-void DownloadQueue::stopDownload(Chapter *chapter) {
+void DownloadQueue::stopDownload(const Ref<Chapter> &chapter) {
     auto it = chapters.find(chapter->getUrl());
     if (it != chapters.end()) {
         it->second->stop();
@@ -531,7 +531,7 @@ void DownloadQueue::pausePage(DownloadPage *page) {
 
 void DownloadQueue::checkChaptersQueue() {
     if (!current_chapter && chapters_queue.size()) {
-        current_chapter = (DownloadChapter*)chapters_queue.front();
+        current_chapter = chapters_queue.front();
         chapters_queue.pop_front();
         current_chapter->start();
     }
@@ -539,7 +539,7 @@ void DownloadQueue::checkChaptersQueue() {
 
 void DownloadQueue::checkPageQueue() {
     if (!current_page && pages_queue.size()) {
-        current_page = (DownloadPage*)pages_queue.front();
+        current_page = pages_queue.front();
         pages_queue.pop_front();
         current_page->start();
     }

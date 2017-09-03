@@ -24,6 +24,7 @@ namespace nl {
         string name;
         string chapter_name;
         string thumb;
+        string thumb_ref;
 
     public:
         METHOD _FORCE_INLINE_ void setType(int type) {
@@ -82,6 +83,14 @@ namespace nl {
         }
         PROPERTY(chapter_name, getChapterName, setChapterName)
 
+        METHOD _FORCE_INLINE_ void setThumbRef(const string &ref) {
+            this->thumb_ref = ref;
+        }
+        METHOD _FORCE_INLINE_ const string &getThumbRef() {
+            return thumb_ref;
+        }
+        PROPERTY(thumb_ref, getThumbRef, setThumbRef)
+
         METHOD string html();
         METHOD static RefArray parse(const string &content);
 
@@ -94,6 +103,7 @@ namespace nl {
             ADD_PROPERTY(cls, "thumb", ADD_METHOD(cls, Art, getThumb), ADD_METHOD(cls, Art, setThumb));
             ADD_PROPERTY(cls, "chapter_url", ADD_METHOD(cls, Art, getChapterUrl), ADD_METHOD(cls, Art, setChapterUrl));
             ADD_PROPERTY(cls, "chapter_name", ADD_METHOD(cls, Art, getChapterName), ADD_METHOD(cls, Art, setChapterName));
+            ADD_PROPERTY(cls, "thumb_ref", ADD_METHOD(cls, Art, getThumbRef), ADD_METHOD(cls, Art, setThumbRef));
             ADD_METHOD(cls, Art, html);
             ADD_METHOD(cls, Art, parse);
         ON_LOADED_END

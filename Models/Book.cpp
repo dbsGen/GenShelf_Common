@@ -61,67 +61,13 @@ Book *Book::parse(const string &path) {
     if (access(file.c_str(), F_OK) == 0) {
         Ref<Data> data(new FileData(file));
         JSONNODE *node = json_parse(data->text());
-        JSONNODE *url_node = json_get(node, "url");
-        JSONNODE *shop_node = json_get(node, "shop");
-        if (url_node && shop_node) {
-            Book *book = new_t(Book);
-            char *str = json_as_string(url_node);
-            book->setUrl(str);
-            json_free(str);
-            JSONNODE *name_node = json_get(node, "name");
-            if (name_node) {
-                str = json_as_string(name_node);
-                book->setName(str);
-                json_free(str);
-            }
-            JSONNODE *thumb_node = json_get(node, "thumb");
-            if (thumb_node) {
-                str = json_as_string(thumb_node);
-                book->setThumb(str);
-                json_free(str);
-            }
-            JSONNODE *subtitle_node = json_get(node, "subtitle");
-            if (subtitle_node) {
-                str = json_as_string(subtitle_node);
-                book->setSubtitle(str);
-                json_free(str);
-            }
-            JSONNODE *des_node = json_get(node, "des");
-            if (des_node) {
-                str = json_as_string(des_node);
-                book->setDes(str);
-                json_free(str);
-            }
-            JSONNODE *idx_node = json_get(node, "index");
-            if (idx_node) {
-                book->index = (int)json_as_int(idx_node);
-            }
-
-            JSONNODE_ITERATOR header_it = json_find(node, "thumb_headers");
-            if (header_it != json_end(node)) {
-                JSONNODE_ITERATOR it = json_begin(*header_it), _e = json_end(*header_it);
-                while (it != _e) {
-                    Map *map = *book->thumb_headers;
-                    char *name = json_name(*it);
-                    char *val = json_as_string(*it);
-                    map->set(name, Variant(val));
-                    json_free(name);
-                    json_free(val);
-                    ++it;
-                }
-            }
-
-            str = json_as_string(shop_node);
-            book->setShopId(str);
-            json_free(str);
-            
-            json_delete(node);
-
+        Book *book = parse(node);
+        if (book) {
             DIR *dir = opendir(path.c_str());
             if (dir) {
-                struct dirent* ent = NULL;
+                struct dirent *ent = NULL;
                 while (NULL != (ent = readdir(dir))) {
-                    if (ent->d_type!=8 && ent->d_name[0] != '.') {
+                    if (ent->d_type != 8 && ent->d_name[0] != '.') {
                         Ref<Chapter> chapter = Chapter::parse(path + '/' + ent->d_name);
                         if (chapter) {
                             chapter->setShopId(book->getShopId());
@@ -131,13 +77,79 @@ Book *Book::parse(const string &path) {
                 }
                 closedir(dir);
             }
-            
-            return book;
         }
         json_delete(node);
+        return book;
+
     }
     return NULL;
 }
+
+Book* Book::parse(JSONNODE *node) {
+    JSONNODE *url_node = json_get(node, "url");
+    JSONNODE *shop_node = json_get(node, "shop");
+    if (url_node && shop_node) {
+        Book *book = new_t(Book);
+        char *str = json_as_string(url_node);
+        book->setUrl(str);
+        json_free(str);
+        JSONNODE *name_node = json_get(node, "name");
+        if (name_node) {
+            str = json_as_string(name_node);
+            book->setName(str);
+            json_free(str);
+        }
+        JSONNODE *thumb_node = json_get(node, "thumb");
+        if (thumb_node) {
+            str = json_as_string(thumb_node);
+            book->setThumb(str);
+            json_free(str);
+        }
+        JSONNODE *subtitle_node = json_get(node, "subtitle");
+        if (subtitle_node) {
+            str = json_as_string(subtitle_node);
+            book->setSubtitle(str);
+            json_free(str);
+        }
+        JSONNODE *des_node = json_get(node, "des");
+        if (des_node) {
+            str = json_as_string(des_node);
+            book->setDes(str);
+            json_free(str);
+        }
+        JSONNODE *idx_node = json_get(node, "index");
+        if (idx_node) {
+            book->index = (int)json_as_int(idx_node);
+        }
+
+        JSONNODE_ITERATOR header_it = json_find(node, "thumb_headers");
+        if (header_it != json_end(node)) {
+            JSONNODE_ITERATOR it = json_begin(*header_it), _e = json_end(*header_it);
+            while (it != _e) {
+                Map *map = *book->thumb_headers;
+                char *name = json_name(*it);
+                char *val = json_as_string(*it);
+                map->set(name, Variant(val));
+                json_free(name);
+                json_free(val);
+                ++it;
+            }
+        }
+
+        str = json_as_string(shop_node);
+        book->setShopId(str);
+        json_free(str);
+
+        return book;
+    }
+    return NULL;
+}
+
+struct BookCompare {
+    bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
+        return b1->getIndex() > b2->getIndex();
+    }
+};
 
 RefArray Book::localBooks() {
     variant_vector vs;
@@ -145,11 +157,6 @@ RefArray Book::localBooks() {
     for (auto it = local_books.begin(), _e = local_books.end(); it != _e; ++it) {
         vs.push_back(it->second);
     }
-    struct BookCompare {
-        bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
-            return b1->getIndex() < b2->getIndex();
-        }
-    };
     sort(vs.begin(), vs.end(), BookCompare());
     return vs;
 }
@@ -160,11 +167,6 @@ RefArray Book::likedBooks() {
     for (auto it = liked_books.begin(), _e = liked_books.end(); it != _e; ++it) {
         vs.push_back(it->second);
     }
-    struct BookCompare {
-        bool operator ()(const Ref<Book> &b1, const Ref<Book> &b2) {
-            return b1->getIndex() < b2->getIndex();
-        }
-    };
     sort(vs.begin(), vs.end(), BookCompare());
     return vs;
 }
@@ -235,7 +237,7 @@ void Book::removeChapter(nl::Chapter *chapter) {
 
 void Book::convertLocal(bool just_like) {
     getLocalBooks();
-    if (local_books.find(url) == local_books.end()) {
+    if (just_like || local_books.find(url) == local_books.end()) {
         string path;
         if (just_like) {
             path = FileSystem::getInstance()->getStoragePath() + "/liked_books";
@@ -255,29 +257,30 @@ void Book::convertLocal(bool just_like) {
         if (access(path.c_str(), F_OK) == 0) {
             remove(path.c_str());
         }
-        JSONNODE *node = json_new(JSON_NODE);
-        JSONNODE_ITERATOR it = json_begin(node);
-        it = json_insert(node, it, json_new_a("url", getUrl().c_str()));
-        it = json_insert(node, it, json_new_a("shop", getShopId().str()));
-        if (name.size()) {
-            it = json_insert(node, it, json_new_a("name", name.c_str()));
+        JSONNODE *node = unparse();
+        if (just_like) {
+            static const string lc_string = "like_count";
+            int like_count = atoi(KeyValue::get(lc_string).c_str());
+            if (like_count == 0) {
+                like_count = liked_books.size();
+            }
+            json_push_back(node, json_new_i("index", like_count));
+            ++like_count;
+            char str[20];
+            sprintf(str, "%d", like_count);
+            KeyValue::set(lc_string, str);
+        }else {
+            static const string lc_string = "local_count";
+            int local_count = atoi(KeyValue::get(lc_string).c_str());
+            if (local_count == 0) {
+                local_count = local_books.size();
+            }
+            json_push_back(node, json_new_i("index", local_count));
+            ++local_count;
+            char str[20];
+            sprintf(str, "%d", local_count);
+            KeyValue::set(lc_string, str);
         }
-        if (thumb.size()) {
-            it = json_insert(node, it, json_new_a("thumb", thumb.c_str()));
-        }
-        if (subtitle.size()) {
-            it = json_insert(node, it, json_new_a("subtitle", subtitle.c_str()));
-        }
-        if (des.size()) {
-            it = json_insert(node, it, json_new_a("des", des.c_str()));
-        }
-        it = json_insert(node, it, json_new_i("index", local_books.size()));
-        Map *map = *thumb_headers;
-        JSONNODE *headers_node = json_new(JSON_NODE);
-        for (auto hit = map->begin(), _e = map->end(); hit != _e; ++hit) {
-            json_push_back(headers_node, json_new_a(hit->first.c_str(), hit->second));
-        }
-        it = json_insert(node, it, headers_node);
 
         FILE *file = fopen(path.c_str(), "wb");
         json_char *chs = json_write(node);
@@ -292,6 +295,32 @@ void Book::convertLocal(bool just_like) {
             local_books[url] = this;
         }
     }
+}
+
+JSONNODE* Book::unparse() const {
+    JSONNODE *node = json_new(JSON_NODE);
+    JSONNODE_ITERATOR it = json_begin(node);
+    it = json_insert(node, it, json_new_a("url", getUrl().c_str()));
+    it = json_insert(node, it, json_new_a("shop", getShopId().str()));
+    if (name.size()) {
+        it = json_insert(node, it, json_new_a("name", name.c_str()));
+    }
+    if (thumb.size()) {
+        it = json_insert(node, it, json_new_a("thumb", thumb.c_str()));
+    }
+    if (subtitle.size()) {
+        it = json_insert(node, it, json_new_a("subtitle", subtitle.c_str()));
+    }
+    if (des.size()) {
+        it = json_insert(node, it, json_new_a("des", des.c_str()));
+    }
+    Map *map = *thumb_headers;
+    JSONNODE *headers_node = json_new(JSON_NODE);
+    for (auto hit = map->begin(), _e = map->end(); hit != _e; ++hit) {
+        json_push_back(headers_node, json_new_a(hit->first.c_str(), hit->second));
+    }
+    it = json_insert(node, it, headers_node);
+    return node;
 }
 
 void Book::unlikeBook() {

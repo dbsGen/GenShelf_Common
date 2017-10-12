@@ -3,6 +3,7 @@
 //
 
 #include "History.h"
+#include <sys/time.h>
 #include <Renderer.h>
 
 using namespace nl;

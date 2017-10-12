@@ -47,6 +47,16 @@ void KeyValue::set(const string &key, const string &value) {
     kv->save();
 }
 
+RefArray KeyValue::search(const string &key) {
+    RefArray arr;
+    RefArray kvs = query()->like("key", key)->results();
+    for (auto it = kvs->begin(), _e = kvs->end(); it != _e; ++it) {
+        const Ref<KeyValue> &kv = *it;
+        arr.push_back(kv->getValue());
+    }
+    return arr;
+}
+
 void KeyValue::pushCache(const string &key, const Ref<KeyValue> &kv) {
     while (caches.size() > 100) {
         caches.erase(caches.begin());

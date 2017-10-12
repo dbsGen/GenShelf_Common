@@ -17,6 +17,7 @@
 #include "Utils/Encoder/Encoder.h"
 #include "Models/ArtBasket.h"
 #include "Models/History.h"
+#include "Models/SearchTip.h"
 #include <core/math/Type.h>
 
 void GS_load_classes() {
@@ -33,4 +34,5 @@ void GS_load_classes() {
     nl::Art::getClass();
     nl::ArtBasket::getClass();
     nl::History::getClass();
+    nl::SearchTip::getClass();
 }

@@ -24,6 +24,7 @@ namespace nl {
 
         METHOD static string get(const string &key);
         METHOD static void set(const string &key, const string &value);
+        METHOD static RefArray search(const string &key);
 
         static void registerFields() {
             Model<KeyValue>::registerFields();
@@ -37,6 +38,7 @@ namespace nl {
             ADD_PROPERTY(cls, "key", ADD_METHOD(cls, KeyValue, getKey), ADD_METHOD(cls, KeyValue, setKey));
             ADD_METHOD(cls, KeyValue, get);
             ADD_METHOD(cls, KeyValue, set);
+            ADD_METHOD(cls, KeyValue, search);
         ON_LOADED_END
 
     CLASS_END

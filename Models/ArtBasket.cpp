@@ -22,6 +22,15 @@ void ArtBasket::addBook(const Ref<Book> &book) {
     art->setName(book->getName());
     art->setShopId(book->getShopId());
     art->setThumb(book->getThumb());
+    const RefMap &headers = book->getThumbHeaders();
+    auto it = headers->find("Referer");
+    if (it == headers->end()) {
+        it = headers->find("referer");
+    }
+    if (it != headers->end()) {
+        string ref = it->second;
+        art->setThumbRef(ref);
+    }
     art->setType(1);
     arts->push_back(art);
 }
@@ -40,6 +49,15 @@ void ArtBasket::addChapter(const Ref<Book> &book, const Ref<Chapter> &chapter) {
     art->setChapterUrl(chapter->getUrl());
     art->setShopId(book->getShopId());
     art->setThumb(book->getThumb());
+    const RefMap &headers = book->getThumbHeaders();
+    auto it = headers->find("Referer");
+    if (it == headers->end()) {
+        it = headers->find("referer");
+    }
+    if (it != headers->end()) {
+        string ref = it->second;
+        art->setThumbRef(ref);
+    }
     art->setType(0);
     arts->push_back(art);
 }
@@ -67,6 +85,11 @@ string Art::html() {
     ss << "' name='";
     ss << replace_all_distinct(name, "\'", "\\\'");
     ss << "'";
+    if (!thumb_ref.empty()) {
+        ss << "' ref='";
+        ss << replace_all_distinct(thumb_ref, "\'", "\\\'");
+        ss << "'";
+    }
     if (type == 0) {
         ss << " c_name='";
         ss << replace_all_distinct(chapter_name, "\'", "\\\'");
@@ -103,6 +126,9 @@ RefArray Art::parse(const string &content) {
                     art->setChapterName(node->getAttribute("c_name"));
                 if (node->hasAttribute("c_url"))
                     art->setChapterUrl(node->getAttribute("c_url"));
+                if (node->hasAttribute("ref")) {
+                    art->setThumbRef(node->getAttribute("ref"));
+                }
                 rets->push_back(art);
                 break;
             }

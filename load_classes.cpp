@@ -18,6 +18,7 @@
 #include "Models/ArtBasket.h"
 #include "Models/History.h"
 #include "Models/SearchTip.h"
+#include "Models/GBDocument.h"
 #include <core/math/Type.h>
 
 void GS_load_classes() {
@@ -35,4 +36,6 @@ void GS_load_classes() {
     nl::ArtBasket::getClass();
     nl::History::getClass();
     nl::SearchTip::getClass();
+    nl::GBNode::getClass();
+    nl::GBDocument::getClass();
 }

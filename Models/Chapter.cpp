@@ -10,16 +10,17 @@
 #include "DownloadQueue.h"
 #include <utils/json/libjson.h>
 #include <core/Data.h>
+#include <cstring>
 #include "KeyValue.h"
 #include "unistd.h"
 
 using namespace nl;
-using namespace hicore;
+using namespace gcore;
 
 const char *Chapter::DATA_FILE = "data.json";
 
 void Chapter::saveConfig(const string &path) {
-    
+
     if (access(path.c_str(), F_OK) == 0) {
         remove(path.c_str());
     }
@@ -30,7 +31,7 @@ void Chapter::saveConfig(const string &path) {
         it = json_insert(node, it, json_new_a("name", getName().c_str()));
     }
 //    it = json_insert(node, it, json_new_i("index", getIndex()));
-    
+
     if (pages.size()) {
         JSONNODE *pages_node = json_new(JSON_ARRAY);
         json_set_name(pages_node, "pages");
@@ -41,7 +42,7 @@ void Chapter::saveConfig(const string &path) {
         }
         it = json_insert(node, it, pages_node);
     }
-    
+
     FILE *file = fopen(path.c_str(), "wb");
     json_char *chs = json_write(node);
     fwrite(chs, strlen(chs), 1, file);
@@ -53,7 +54,7 @@ void Chapter::saveConfig(const string &path) {
 Chapter *Chapter::parse(const string &path) {
     string file = path + "/" + DATA_FILE;
     Chapter *chapter = NULL;
-    
+
     if (access(file.c_str(), F_OK) == 0) {
         Ref<Data> data(new FileData(file));
         JSONNODE *node = json_parse(data->text());
@@ -63,14 +64,14 @@ Chapter *Chapter::parse(const string &path) {
             char *str = json_as_string(url_node);
             chapter->setUrl(str);
             json_free(str);
-            
+
             JSONNODE *name_node = json_get(node, "name");
             if (name_node) {
                 str = json_as_string(name_node);
                 chapter->setName(str);
                 json_free(str);
             }
-            
+
             JSONNODE *pages_node = json_get(node, "pages");
             if (pages_node) {
                 json_index_t size = json_size(pages_node);
@@ -81,7 +82,7 @@ Chapter *Chapter::parse(const string &path) {
                     chapter->pages->push_back(page);
                 }
                 chapter->status = Pause;
-                
+
             }else
                 chapter->status = None;
         }
@@ -118,11 +119,11 @@ void Chapter::bringFirst(int index) {
     DownloadQueue::getInstance()->pageStatusAndBringFirst(this, index);
 }
 
-RefArray Chapter::cachedPages() const {
+Array Chapter::cachedPages() const {
     string key = "chapter:";
     key += url;
     string val = KeyValue::get(key);
-    RefArray pages;
+    Array pages;
     if (!val.empty()) {
         JSONNODE *pages_node = json_parse(val.c_str());
         if (pages_node) {
@@ -141,7 +142,7 @@ RefArray Chapter::cachedPages() const {
     return pages;
 }
 
-void Chapter::cachePages(const RefArray &pages) const {
+void Chapter::cachePages(const Array &pages) const {
     string key = "chapter:";
     key += url;
     JSONNODE *pages_node = json_new(JSON_ARRAY);
@@ -177,7 +178,7 @@ void Chapter::stopDownload() {
     DownloadQueue::getInstance()->stopDownload(this);
 }
 
-void Chapter::downloadingChapters(const RefArray &books, const RefArray &chapters) {
+void Chapter::downloadingChapters(const Array &books, const Array &chapters) {
     const map<string, Ref<DownloadChapter> > &chs = DownloadQueue::getInstance()->getChapters();
     for (auto it = chs.begin(), _e = chs.end(); it != _e; ++it) {
         if (it->second->getStatus() != DownloadQueue::StatusComplete) {

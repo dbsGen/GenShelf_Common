@@ -10,7 +10,7 @@
 #include "Shop.h"
 
 using namespace nl;
-using namespace hirender;
+using namespace gr;
 
 const StringName &DownloadPage::NOTIFICATION_STATUS("PAGE_STATUS");
 const StringName &DownloadChapter::NOTIFICATION_STATUS("CHAPTER_STATUS");
@@ -31,19 +31,19 @@ namespace nl {
             ADD_FILED(DownloadData, chapter_url, ChapterUrl, false);
         }
 
-        _FORCE_INLINE_ static RefArray all() {
+        _FORCE_INLINE_ static Array all() {
             return query()->results();
         }
 
         static Ref<DownloadData> find(const Ref<Book> &book, const Ref<Chapter> &chapter) {
-            RefArray arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
+            Array arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
             if (arr.size() > 0) {
                 return arr.at(0);
             }
             return Ref<DownloadData>::null();
         }
         static void del(const Ref<Book> &book, const Ref<Chapter> &chapter) {
-            RefArray arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
+            Array arr = query()->equal("book_url", book->getUrl())->andQ()->equal("chapter_url", chapter->getUrl())->results();
             if (arr.size() > 0) {
                 Ref<DownloadData> data = arr.at(0);
                 data->remove();
@@ -73,7 +73,7 @@ void DownloadPage::start() {
     client->setTimeout(10);
     client->setMethod(page->getMethod());
     client->setReadCache(true);
-    const RefMap &map = page->getHeaders();
+    const Map &map = page->getHeaders();
     for (auto it = map->begin(), _e = map->end(); it != _e; ++it) {
         client->addHeader(it->first, it->second);
     }
@@ -424,7 +424,7 @@ DownloadQueue::Result DownloadQueue::startDownload(Book *book, Chapter *chapter)
             string path = book->chapterPath(chapter);
             DIR *dir = opendir(path.c_str());
             if (dir) {
-                const RefArray &pages = chapter->getPages();
+                const Array &pages = chapter->getPages();
                 int size = pages.size();
                 if (size == 0) {
                     dc->status = StatusWaiting;
@@ -558,7 +558,7 @@ DownloadQueue::DownloadQueue() : current_chapter(NULL), current_page(NULL) {
 }
 
 void DownloadQueue::loadAll() {
-    RefArray arr = DownloadData::all();
+    Array arr = DownloadData::all();
     for (auto it = arr->begin(), _e = arr->end(); it != _e; ++it) {
         Ref<DownloadData> data = *it;
         string path = FileSystem::getInstance()->getStoragePath();

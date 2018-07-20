@@ -40,7 +40,7 @@ Variant DuktapeEngine::process(void *context) {
         if (duk_get_prop_string(ctx, -1, "length")) {
             duk_int_t len = duk_get_int(ctx, -1);
             duk_pop(ctx);
-            RefArray arr;
+            Array arr;
             
             for (int i = 0; i < len; ++i) {
                 if (duk_get_prop_index(ctx, -1, i)) {

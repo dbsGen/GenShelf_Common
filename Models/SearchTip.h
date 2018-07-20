@@ -8,7 +8,7 @@
 #include <utils/database/Model.h>
 #include "../nl_define.h"
 
-using namespace hirender;
+using namespace gr;
 
 namespace nl {
     CLASS_BEGIN_TN(SearchTip, Model, 1, SearchTip)
@@ -25,7 +25,7 @@ namespace nl {
         }
 
         METHOD static void insert(const string &key);
-        METHOD static RefArray search(const string &key);
+        METHOD static Array search(const string &key);
         METHOD static void removeKey(const string &key);
 
     protected:

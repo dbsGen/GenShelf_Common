@@ -17,12 +17,14 @@
 #include <utils/json/libjson.h>
 #ifdef __ANDROID__
 #include <bits/stl_algo.h>
+#include <cstring>
+
 #endif
 #include "Shop.h"
 #include "io_helper.h"
 
 using namespace nl;
-using namespace hirender;
+using namespace gr;
 
 map<string, Ref<Book> > Book::local_books;
 map<string, Ref<Book> > Book::liked_books;
@@ -42,7 +44,7 @@ Ref<BookData> BookData::get(const string &url) {
     if (it != caches.end()) {
         return it->second;
     }
-    RefArray arr = BookData::query()->equal("url", url)->results();
+    Array arr = BookData::query()->equal("url", url)->results();
     if (arr.size() > 0) {
         Ref<BookData> bd = arr.at(0).ref();
         pushCache(url, bd);
@@ -57,7 +59,7 @@ Ref<BookData> BookData::get(const string &url) {
 
 Book *Book::parse(const string &path) {
     string file = path + "/data.json";
-    
+
     if (access(file.c_str(), F_OK) == 0) {
         Ref<Data> data(new FileData(file));
         JSONNODE *node = json_parse(data->text());
@@ -126,7 +128,7 @@ Book* Book::parse(JSONNODE *node) {
         if (header_it != json_end(node)) {
             JSONNODE_ITERATOR it = json_begin(*header_it), _e = json_end(*header_it);
             while (it != _e) {
-                Map *map = *book->thumb_headers;
+                const Map &map = book->thumb_headers;
                 char *name = json_name(*it);
                 char *val = json_as_string(*it);
                 map->set(name, Variant(val));
@@ -151,7 +153,7 @@ struct BookCompare {
     }
 };
 
-RefArray Book::localBooks() {
+Array Book::localBooks() {
     variant_vector vs;
     const map<string, Ref<Book> > &local_books = Book::getLocalBooks();
     for (auto it = local_books.begin(), _e = local_books.end(); it != _e; ++it) {
@@ -161,7 +163,7 @@ RefArray Book::localBooks() {
     return vs;
 }
 
-RefArray Book::likedBooks() {
+Array Book::likedBooks() {
     variant_vector vs;
     Book::getLocalBooks();
     for (auto it = liked_books.begin(), _e = liked_books.end(); it != _e; ++it) {
@@ -179,7 +181,7 @@ const map<string, Ref<Book> > &Book::getLocalBooks() {
     if (!local_books_inited) {
         local_books_inited = true;
         string path = FileSystem::getInstance()->getStoragePath() + "/local_books";
-        
+
         DIR *dir = opendir(path.c_str());
         if (dir) {
             struct dirent* ent = NULL;
@@ -314,7 +316,7 @@ JSONNODE* Book::unparse() const {
     if (des.size()) {
         it = json_insert(node, it, json_new_a("des", des.c_str()));
     }
-    Map *map = *thumb_headers;
+    const Map &map = thumb_headers;
     JSONNODE *headers_node = json_new(JSON_NODE);
     for (auto hit = map->begin(), _e = map->end(); hit != _e; ++hit) {
         json_push_back(headers_node, json_new_a(hit->first.c_str(), hit->second));
@@ -343,10 +345,10 @@ bool Book::insertLocalChapter(nl::Chapter *chapter) {
             }
             path.push_back('/');
             path += Chapter::DATA_FILE;
-            
+
             chapter->saveConfig(path);
             chapters->at(chapter->getUrl()) = Ref<Chapter>(chapter);
-            
+
             return true;
         }
     }
@@ -378,12 +380,12 @@ void file_copy(const char *src, const char *dst)
         if(fp1) fclose(fp1);
         if(fp2) fclose(fp2);
     }
-    
+
     while((c = fgetc(fp1)) != EOF)
         fputc(c, fp2);
     fclose(fp1);
     fclose(fp2);
-    
+
 }
 
 bool Book::movePicture(nl::Chapter *chapter, const string &pic_path, int idx) {
@@ -402,7 +404,7 @@ bool Book::movePicture(nl::Chapter *chapter, const string &pic_path, int idx) {
     sprintf(p_str, "%04d.pic", idx);
     path += p_str;
     file_copy(pic_path.c_str(), path.c_str());
-    
+
     return true;
 }
 

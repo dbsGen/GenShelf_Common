@@ -12,7 +12,6 @@
 #include <utils/network/HTTPClient.h>
 #include <unistd.h>
 #include "../Utils/minizip/unzip.h"
-#include <Renderer.h>
 #include <utils/NotificationCenter.h>
 #include <thirdparties/mruby/mruby.h>
 #include <thirdparties/mruby/mruby/class.h>
@@ -21,16 +20,17 @@
 #include "../GlobalsDefine.h"
 #include <utils/json/libjson.h>
 #include <set>
+#include <cstring>
 #include "DownloadQueue.h"
 #include "../Utils/MD5/md5.h"
 
 using namespace nl;
-using namespace hirender;
-using namespace hicore;
-using namespace hiscript;
+using namespace gr;
+using namespace gcore;
+using namespace gscript;
 
 bool Shop::readed = false;
-RefArray Shop::local_shops;
+Array Shop::local_shops;
 Ref<Shop> Shop::selected_shop;
 pointer_map Shop::processing_readers;
 
@@ -51,7 +51,7 @@ namespace nl {
         url_md5_string = outStr;
         return url_md5_string.c_str();
     }
-    
+
 }
 
 const Ref<Settings> & Library::settings() {
@@ -64,7 +64,7 @@ void Reader::loadedPage(int idx, bool success, const Ref<nl::Page> &page) {
     if (pages.size() <= idx) {
         pages.vec().resize(idx+1);
     }
-    pages.vec().operator[](idx) = page;
+    pages.vec()[idx] = page;
     if (on_page_loaded) {
         on_page_loaded(success, idx, page);
     }
@@ -84,14 +84,14 @@ void Reader::collect(nl::Chapter *chapter, nl::Book *book) {
         JSONNODE *json = json_new(JSON_NODE);
         json_push_back(json, json_new_a("identifier", identifier.str()));
         json_push_back(json, json_new_a("url", book->getUrl().c_str()));
-        
+
         char *chs = json_as_string(json);
-        
+
         json_free(chs);
-        
+
         json_delete(json);
     }
-    
+
 }
 const Ref<Settings> &Reader::settings() {
     if (shop)
@@ -105,7 +105,7 @@ const StringName Shop::NOTIFICATION_REMOVED("SHOP_REMOVED");
 const StringName Shop::NOTIFICATION_SCRIPT_READY("SHOP_SCRIPT_READY");
 const StringName Shop::NOTIFICATION_COLLECTED("SHOP_COLLECTED");
 
-const RefArray &Shop::getLocalShops() {
+const Array &Shop::getLocalShops() {
     if (!readed) {
         string path = FileSystem::getInstance()->getStoragePath() + "/shops/";
         DIR *dir = opendir(path.c_str());
@@ -134,7 +134,7 @@ const Ref<Shop> &Shop::getCurrentShop() {
     if (!selected_shop) {
         string selected_id;
         FileSystem::getInstance()->configGet("selected_shop", selected_id);
-        const RefArray &shops = getLocalShops();
+        const Array &shops = getLocalShops();
         StringName id(selected_id.c_str());
         if (!selected_id.empty()) {
             for (int i = 0, t = local_shops.size(); i < t; ++i) {
@@ -174,8 +174,8 @@ void Shop::setCurrentShop(const Ref<nl::Shop> &shop) {
     }
 }
 
-Ref<Shop> Shop::find(const hicore::StringName &identifier) {
-    const RefArray &shops = getLocalShops();
+Ref<Shop> Shop::find(const gcore::StringName &identifier) {
+    const Array &shops = getLocalShops();
     for (int i = 0, t = local_shops.size(); i < t; ++i) {
         Ref<Shop> shop = local_shops.at(i);
         if (shop->getIdentifier() == identifier) {
@@ -220,10 +220,10 @@ Shop *Shop::parse(const string &path) {
     return nullptr;
 }
 
-RefArray Shop::parseShops(const string &path) {
+Array Shop::parseShops(const string &path) {
     FileData file(path.c_str());
     JSONNODE *node = json_parse(file.text());
-    RefArray arr;
+    Array arr;
     for (int i = 0, t = json_size(node); i < t; ++i) {
         JSONNODE *child = json_at(node, i);
         JSONNODE *id_node = json_get(child, "id");
@@ -282,7 +282,7 @@ Shop *Shop::parseJson(void *node) {
     if (pv_node) {
         shop->package_version = json_as_int(pv_node);
     }
-    
+
     return shop;
 }
 
@@ -295,7 +295,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
             shop->is_localize = false;
             goto failed;
         }
-        
+
         unz_global_info global_info;
         if ( unzGetGlobalInfo( zipfile, &global_info ) != UNZ_OK )
         {
@@ -303,7 +303,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
             unzClose( zipfile );
             goto failed;
         }
-        
+
 #define READ_SIZE 8192
         char read_buffer[ READ_SIZE ];
         string path = FileSystem::getInstance()->getStoragePath() + "/shops/";
@@ -325,12 +325,12 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
                                        filename,
                                        MAX_FILENAME,
                                        NULL, 0, NULL, 0 ) != UNZ_OK )
-            {  
+            {
                 LOG(w, "could not read file info");
                 unzClose( zipfile );
                 goto failed;
             }
-            
+
             const size_t filename_length = strlen( filename );
             if ( filename[ filename_length-1 ] == dir_delimter )
             {
@@ -341,7 +341,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
                     unzClose( zipfile );
                     goto failed;
                 }
-                
+
                 FILE *out = fopen((path + filename).c_str(), "wb");
                 if (out == NULL)
                 {
@@ -350,7 +350,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
                     unzClose( zipfile );
                     goto failed;
                 }
-                
+
                 int error = UNZ_OK;
                 do
                 {
@@ -362,17 +362,17 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
                         unzClose( zipfile );
                         return;
                     }
-                    
+
                     // Write data to file.
                     if ( error > 0 )
                     {
                         fwrite( read_buffer, error, 1, out ); // You should check return of fwrite...
                     }
-                } while ( error > 0 );  
-                
+                } while ( error > 0 );
+
                 fclose( out );
             }
-            
+
             unzCloseCurrentFile( zipfile );
             if ( ( i+1 ) < global_info.number_entry )
             {
@@ -385,7 +385,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
             }
         }
         unzClose(zipfile);
-        
+
         JSONNODE *node = json_new(JSON_NODE);
         JSONNODE_ITERATOR it = json_begin(node);
         it = json_insert(node, it, json_new_a("name", shop->name.c_str()));
@@ -396,7 +396,7 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
         it = json_insert(node, it, json_new_a("url", shop->package.c_str()));
         it = json_insert(node, it, json_new_a("description", shop->description.c_str()));
         it = json_insert(node, it, json_new_i("package_version", shop->package_version));
-        
+
         FILE *file = fopen((path + "config.json").c_str(), "wb");
         json_char *chs = json_write(node);
         fwrite(chs, strlen(chs), 1, file);
@@ -442,7 +442,7 @@ void Shop::setupScript() {
     if (isLocalize() && !script) {
         script = new RubyScript;
         script->setup((FileSystem::getInstance()->getResourcePath() + "/ruby").c_str());
-        
+
         string path;
         if (IS_DEBUG) {
             path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root";
@@ -453,7 +453,7 @@ void Shop::setupScript() {
         path += "/config.rb";
 
         script->run(path.c_str());
-        
+
         vector<Variant> vs{this};
         NotificationCenter::getInstance()->trigger(NOTIFICATION_SCRIPT_READY, &vs);
     }
@@ -468,11 +468,11 @@ bool Shop::setupLibrary(Library *lib) {
     if (mrb_bool(val)) {
         struct RClass *scls = mrb_class_ptr(val);
         RubyInstance *sins = script->newBuff(scls, lib, NULL, 0);
-        
+
         mrb_gv_set(script->getMRB(),
                    mrb_intern_cstr(script->getMRB(), "library_instance"),
                    mrb_obj_value(sins->getScriptInstance()));
-        
+
         return true;
     }
     return false;
@@ -488,14 +488,14 @@ bool Shop::setupReader(Reader *reader) {
     if (mrb_bool(val)) {
         struct RClass *scls = mrb_class_ptr(val);
         RubyInstance *sins = script->newBuff(scls, reader, NULL, 0);
-        
+
         char str[40];
         sprintf(str, "reader_%ld", (long)reader);
-        
+
         mrb_gv_set(script->getMRB(),
                    mrb_intern_cstr(script->getMRB(), str),
                    mrb_obj_value(sins->getScriptInstance()));
-        
+
         return true;
     }
     return false;
@@ -505,13 +505,13 @@ bool Shop::unbindReader(nl::Reader *reader) {
     if (!script) {
         setupScript();
     }
-    
+
     char str[40];
     sprintf(str, "reader_%ld", (long)reader);
-    
+
     mrb_gv_remove(script->getMRB(),
                   mrb_intern_cstr(script->getMRB(), str));
-    
+
     return true;
 }
 
@@ -551,7 +551,7 @@ void Shop::remove() {
 
 int Shop::collect(Book *book, nl::Chapter *chapter) {
     if (isLocalize()) {
-        
+
         const map<string, Ref<Book> > &local_books = Book::getLocalBooks();
         Ref<Book> current_book;
         auto it = local_books.find(book->getUrl());
@@ -567,10 +567,10 @@ int Shop::collect(Book *book, nl::Chapter *chapter) {
             if (current_book->insertLocalChapter(chapter)) {
                 download(book, chapter);
             }
-            
+
             variant_vector vs {book, chapter};
             NotificationCenter::getInstance()->trigger(NOTIFICATION_COLLECTED, &vs);
-            
+
             return 0;
         }else {
             return 1;
@@ -602,14 +602,14 @@ void Shop::removeDownload(Chapter *chapter) {
 
 const Ref<Settings> &Shop::getSettings() {
     if (isLocalize() && !settings) {
-        
+
         settings = new Settings;
         settings->shop = this;
-        
+
         if (!script) {
             setupScript();
         }
-        
+
         string path;
         if (IS_DEBUG) {
             path = FileSystem::getInstance()->getResourcePath() + "/ruby/t_root";
@@ -628,7 +628,7 @@ const Ref<Settings> &Shop::getSettings() {
         }else if (val.tt == MRB_TT_CLASS || val.tt == MRB_TT_ICLASS || val.tt == MRB_TT_SCLASS){
             struct RClass *scls = mrb_class_ptr(val);
             RubyInstance *sins = script->newBuff(scls, *settings, NULL, 0);
-            
+
             mrb_gv_set(script->getMRB(),
                        mrb_intern_cstr(script->getMRB(), "settings"),
                        mrb_obj_value(sins->getScriptInstance()));

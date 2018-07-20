@@ -15,7 +15,7 @@
 #include <utils/json/libjson.h>
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
     CLASS_BEGIN_N(Page, RefObject)
@@ -23,12 +23,12 @@ namespace nl {
         string picture;
         string url;
         StringName method;
-        RefMap headers;
-        RefMap parameters;
+        Map headers;
+        Map parameters;
         int status;
 
     public:
-        Page() : status(0), method(hirender::HTTPClient::METHOD_GET) {}
+        Page() : status(0), method(gr::HTTPClient::METHOD_GET) {}
 
         METHOD _FORCE_INLINE_ void setPicture(const string &url) {
             picture = url;
@@ -60,7 +60,7 @@ namespace nl {
         METHOD _FORCE_INLINE_ void removeHeader(const string &name) {
             headers->erase(name);
         }
-        METHOD const RefMap &getHeaders() const {
+        METHOD const Map &getHeaders() const {
             return headers;
         }
 
@@ -70,7 +70,7 @@ namespace nl {
         METHOD _FORCE_INLINE_ void removeParameter(const string &name) {
             parameters->erase(name);
         }
-        METHOD const RefMap &getParameters() const {
+        METHOD const Map &getParameters() const {
             return parameters;
         }
 
@@ -87,7 +87,7 @@ namespace nl {
         }
         PROPERTY(status, getStatus, setStatus);
 
-        METHOD Ref<hirender::HTTPClient> makeClient() const;
+        METHOD Ref<gr::HTTPClient> makeClient() const;
 
         JSONNODE *unparse() const;
         void parse(JSONNODE *node);

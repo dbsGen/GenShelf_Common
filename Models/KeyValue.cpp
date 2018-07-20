@@ -13,7 +13,7 @@ string KeyValue::get(const string &key) {
     if (it != caches.end()) {
         return it->second->getValue();
     }
-    RefArray arr = query()->equal("key", key)->results();
+    Array arr = query()->equal("key", key)->results();
     Ref<KeyValue> kv;
     if (arr.size() > 0) {
         kv = arr.at(0).ref();
@@ -33,7 +33,7 @@ void KeyValue::set(const string &key, const string &value) {
         kv->save();
         return;
     }
-    RefArray arr = query()->equal("key", key)->results();
+    Array arr = query()->equal("key", key)->results();
     Ref<KeyValue> kv;
     if (arr.size() > 0) {
         kv = arr.at(0).ref();
@@ -47,12 +47,12 @@ void KeyValue::set(const string &key, const string &value) {
     kv->save();
 }
 
-RefArray KeyValue::search(const string &key) {
-    RefArray arr;
-    RefArray kvs = query()->like("key", key)->results();
+Array KeyValue::search(const string &key) {
+    Array arr;
+    Array kvs = query()->like("key", key)->results();
     for (auto it = kvs->begin(), _e = kvs->end(); it != _e; ++it) {
         const Ref<KeyValue> &kv = *it;
-        arr.push_back(kv->getValue());
+        arr << kv->getValue();
     }
     return arr;
 }

@@ -13,7 +13,7 @@
 #include <utils/network/HTTPClient.h>
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
 
@@ -25,7 +25,7 @@ namespace nl {
         int status;
         Ref<Page> page;
         DownloadChapter *chapter;
-        Ref<hirender::HTTPClient> client;
+        Ref<gr::HTTPClient> client;
         int index;
 
         friend class DownloadChapter;

@@ -11,10 +11,10 @@
 
 using namespace nl;
 
-Ref<hirender::HTTPClient> Page::makeClient() const {
-    hirender::HTTPClient *client = new_t(hirender::HTTPClient, getPicture());
+Ref<gr::HTTPClient> Page::makeClient() const {
+    gr::HTTPClient *client = new_t(gr::HTTPClient, getPicture());
     client->setMethod(getMethod());
-    const RefMap &headers = getHeaders();
+    const Map &headers = getHeaders();
     for (auto it = headers->begin(), _e = headers->end(); it != _e; ++it) {
         client->addHeader(it->first, it->second);
     }

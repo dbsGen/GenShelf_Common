@@ -15,7 +15,7 @@
 #include <core/Data.h>
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
     class Shop;

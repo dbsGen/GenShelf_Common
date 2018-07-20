@@ -13,10 +13,11 @@
 #include <core/String.h>
 #include <utils/NotificationCenter.h>
 #include <utils/json/libjson.h>
+#include <cstring>
 
 using namespace nl;
-using namespace hicore;
-using namespace hirender;
+using namespace gcore;
+using namespace gr;
 
 const StringName Settings::NOTIFICATION_OPEN_WEB_VIEW("OPEN_WEB_VIEW");
 const StringName Settings::NOTIFICATION_SHOW_MESSAGE("SHOW_MSG");
@@ -45,7 +46,7 @@ Variant Settings::parseJson(void *node) {
             for (int i = 0, t = json_size(node); i < t; ++i) {
                 vs.push_back(parseJson(json_at(node, i)));
             }
-            ret = RefArray(vs);
+            ret = Array(vs);
             break;
         }
         case JSON_STRING: {
@@ -62,7 +63,7 @@ Variant Settings::parseJson(void *node) {
             ret = json_as_bool(node);
             break;
         }
-            
+
         default:
             break;
     }
@@ -83,7 +84,7 @@ void Settings::parse(const char *path) {
                 char *str = json_as_string(name_node);
                 item->setName(str);
                 json_free(str);
-                
+
                 JSONNODE *type_node = json_get(node, "type");
                 if (type_node) {
                     char *str = json_as_string(type_node);
@@ -100,12 +101,12 @@ void Settings::parse(const char *path) {
                     }
                     json_free(str);
                 }
-                
+
                 JSONNODE *param_node = json_get(node, "param");
                 if (param_node) {
                     item->setParams(parseJson(param_node));
                 }
-                
+
                 JSONNODE *default_node = json_get(node, "default");
                 if (default_node) {
                     item->setDefaultValue(parseJson(default_node));
@@ -255,7 +256,7 @@ void Settings::load(const string &path) {
                             item->setValue(json_as_int(child));
                             break;
                         }
-                            
+
                         default:
                             break;
                     }
@@ -289,7 +290,7 @@ void Settings::load(const string &path) {
             }
             json_delete(node);
         }
-        
+
     }
 }
 

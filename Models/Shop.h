@@ -21,7 +21,7 @@
 #include "Settings.h"
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
     class Shop;
@@ -66,7 +66,7 @@ namespace nl {
 
         RefCallback on_page_count;
         RefCallback on_page_loaded;
-        RefArray pages;
+        Array pages;
         StringName identifier;
         Shop *shop;
         friend class Shop;
@@ -99,7 +99,7 @@ namespace nl {
             return on_page_loaded;
         }
 
-        METHOD const RefArray &getPages() {
+        METHOD const Array &getPages() {
             return pages;
         }
 
@@ -138,10 +138,10 @@ namespace nl {
 
     CLASS_BEGIN_N(Shop, RefObject)
 
-        static RefArray local_shops;
+        static Array local_shops;
         static Ref<Shop> selected_shop;
         static bool readed;
-        hiscript::RubyScript *script;
+        gscript::RubyScript *script;
 
         bool is_doing;
 
@@ -152,7 +152,7 @@ namespace nl {
         string icon;
         string description;
         Ref<Settings> settings;
-        Ref<hirender::HTTPClient> client;
+        Ref<gr::HTTPClient> client;
         int version;
         int package_version;
 
@@ -167,9 +167,9 @@ namespace nl {
         Shop();
         ~Shop();
 
-        METHOD static const RefArray &getLocalShops();
+        METHOD static const Array &getLocalShops();
         METHOD static Shop *parse(const string &path);
-        METHOD static RefArray parseShops(const string &);
+        METHOD static Array parseShops(const string &);
         static Shop *parseJson(JSONNODE *node);
 
         static const StringName NOTIFICATION_SHOP_CHANGED;

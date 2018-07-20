@@ -8,7 +8,7 @@
 #include <utils/database/Model.h>
 #include "../nl_define.h"
 
-using namespace hirender;
+using namespace gr;
 
 namespace nl {
     CLASS_BEGIN_TN(KeyValue, Model, 1, KeyValue)
@@ -24,7 +24,7 @@ namespace nl {
 
         METHOD static string get(const string &key);
         METHOD static void set(const string &key, const string &value);
-        METHOD static RefArray search(const string &key);
+        METHOD static Array search(const string &key);
 
         static void registerFields() {
             Model<KeyValue>::registerFields();

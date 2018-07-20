@@ -13,7 +13,7 @@
 #include "Page.h"
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
     class Book;
@@ -36,7 +36,7 @@ namespace nl {
         Status status;
         StringName shop_id;
 
-        RefArray pages;
+        Array pages;
         int picture_loaded;
 
     public:
@@ -57,10 +57,10 @@ namespace nl {
         }
         PROPERTY(url, getUrl, setUrl)
 
-        METHOD _FORCE_INLINE_ const RefArray &getPages() {
+        METHOD _FORCE_INLINE_ const Array &getPages() {
             return pages;
         }
-        METHOD _FORCE_INLINE_ void setPages(const RefArray &pages) {
+        METHOD _FORCE_INLINE_ void setPages(const Array &pages) {
             this->pages = pages;
         }
         PROPERTY(pages, getPages, setPages);
@@ -89,13 +89,13 @@ namespace nl {
         METHOD int completeCount();
         METHOD void bringFirst(int index);
 
-        METHOD RefArray cachedPages() const;
-        METHOD void cachePages(const RefArray &pages) const;
+        METHOD Array cachedPages() const;
+        METHOD void cachePages(const Array &pages) const;
         METHOD int lastIndex() const;
         METHOD void setLastIndex(int idx) const;
         METHOD void stopDownload();
 
-        METHOD static void downloadingChapters(const RefArray &books, const RefArray &chapters);
+        METHOD static void downloadingChapters(const Array &books, const Array &chapters);
 
         void saveConfig(const string &path);
 

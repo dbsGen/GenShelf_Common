@@ -4,7 +4,7 @@
 //
 //  Created by gen on 16/05/2017.
 //  Copyright © 2017 gen. All rights reserved.
-// 
+//
 
 #ifndef Globals_h
 #define Globals_h

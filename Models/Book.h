@@ -14,8 +14,8 @@
 #include <utils/database/Model.h>
 #include "../nl_define.h"
 
-using namespace hicore;
-using namespace hirender;
+using namespace gcore;
+using namespace gr;
 
 namespace nl {
     CLASS_BEGIN_TN(BookData, Model, 1, BookData)
@@ -51,7 +51,7 @@ namespace nl {
         string des;
         string url;
 
-        RefMap thumb_headers;
+        Map thumb_headers;
 
         int     index;
 
@@ -65,7 +65,7 @@ namespace nl {
 
         void checkData();
 
-        RefMap chapters;
+        Map chapters;
 
     public:
         // 书本名
@@ -85,11 +85,15 @@ namespace nl {
         }
         PROPERTY(thumb, getThumb, setThumb);
 
-        METHOD _FORCE_INLINE_ const RefMap &getThumbHeaders() {
+        METHOD _FORCE_INLINE_ const Map &getThumbHeaders() {
             return thumb_headers;
         }
-        METHOD _FORCE_INLINE_ void setThumbHeaders(const RefMap &headers) {
-            thumb_headers = headers;
+        METHOD void setThumbHeaders(const Map &headers) {
+            if (!headers) {
+                thumb_headers->clear();
+            }else {
+                thumb_headers = headers;
+            }
         }
         PROPERTY(thumb_headers, getThumbHeaders, setThumbHeaders);
 
@@ -130,15 +134,15 @@ namespace nl {
         PROPERTY(shop_id, getShopId, setShopId);
 
         // 读取所有已经收藏的书本。
-        METHOD static RefArray localBooks();
+        METHOD static Array localBooks();
         // 所有喜欢
-        METHOD static RefArray likedBooks();
+        METHOD static Array likedBooks();
         METHOD bool isLiked();
         static const map<string, Ref<Book> > &getLocalBooks();
         static Book *parse(const string &path);
         static Book *parse(JSONNODE *node);
         JSONNODE *unparse() const;
-        METHOD _FORCE_INLINE_ const RefMap &getChapters() {
+        METHOD _FORCE_INLINE_ const Map &getChapters() {
             return chapters;
         }
         void convertLocal(bool just_like = false);

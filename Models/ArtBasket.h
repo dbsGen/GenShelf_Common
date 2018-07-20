@@ -12,7 +12,7 @@
 #include "Chapter.h"
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 using namespace std;
 
 namespace nl {
@@ -92,7 +92,7 @@ namespace nl {
         PROPERTY(thumb_ref, getThumbRef, setThumbRef)
 
         METHOD string html();
-        METHOD static RefArray parse(const string &content);
+        METHOD static Array parse(const string &content);
 
     protected:
         ON_LOADED_BEGIN(cls, RefObject)
@@ -111,14 +111,14 @@ namespace nl {
 
     CLASS_BEGIN_N(ArtBasket, RefObject)
 
-        static RefArray arts;
+        static Array arts;
 
     public:
 
         METHOD static void addBook(const Ref<Book> &book);
         METHOD static void addChapter(const Ref<Book> &book, const Ref<Chapter> &chapter);
 
-        METHOD _FORCE_INLINE_ static const RefArray &getArts() {
+        METHOD _FORCE_INLINE_ static const Array &getArts() {
             return arts;
         }
 

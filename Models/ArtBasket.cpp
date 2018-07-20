@@ -8,7 +8,7 @@
 
 using namespace nl;
 
-RefArray ArtBasket::arts;
+Array ArtBasket::arts;
 
 void ArtBasket::addBook(const Ref<Book> &book) {
     for (auto it = arts->begin(), _e = arts->end(); it != _e; ++it) {
@@ -22,7 +22,7 @@ void ArtBasket::addBook(const Ref<Book> &book) {
     art->setName(book->getName());
     art->setShopId(book->getShopId());
     art->setThumb(book->getThumb());
-    const RefMap &headers = book->getThumbHeaders();
+    const Map &headers = book->getThumbHeaders();
     auto it = headers->find("Referer");
     if (it == headers->end()) {
         it = headers->find("referer");
@@ -49,7 +49,7 @@ void ArtBasket::addChapter(const Ref<Book> &book, const Ref<Chapter> &chapter) {
     art->setChapterUrl(chapter->getUrl());
     art->setShopId(book->getShopId());
     art->setThumb(book->getThumb());
-    const RefMap &headers = book->getThumbHeaders();
+    const Map &headers = book->getThumbHeaders();
     auto it = headers->find("Referer");
     if (it == headers->end()) {
         it = headers->find("referer");
@@ -101,14 +101,14 @@ string Art::html() {
     return ss.str();
 }
 
-RefArray Art::parse(const string &content) {
+Array Art::parse(const string &content) {
     XMLDocument doc;
     doc.initialize(Data::fromString("<content>"+content+"</content>"), XMLDocument::HTML);
-    if (!doc.getRoot()) return RefArray();
-    RefArray bodys = doc.xpath("//content");
-    if (bodys.size() == 0) return RefArray();
-    const RefArray &cs = bodys.at(0).get<XMLNode>()->getChildren();
-    RefArray rets;
+    if (!doc.getRoot()) return Array();
+    Array bodys = doc.xpath("//content");
+    if (bodys.size() == 0) return Array();
+    const Array &cs = bodys.at(0).get<XMLNode>()->getChildren();
+    Array rets;
     for (auto it = cs->begin(), _e = cs->end(); it != _e; ++it) {
         const Ref<XMLNode> &node = *it;
         switch (node->getType()) {

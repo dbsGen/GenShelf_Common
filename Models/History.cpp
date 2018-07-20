@@ -3,7 +3,6 @@
 //
 
 #include "History.h"
-#include <Renderer.h>
 
 using namespace nl;
 
@@ -14,7 +13,7 @@ void History::visit(const Ref<Book> &book) {
     if (book && !book->getUrl().empty()) {
         const string &url = book->getUrl();
 
-        RefArray arr = query()->equal("url", url)->results();
+        Array arr = query()->equal("url", url)->results();
         Ref<History> his;
         if (arr.size() > 0) {
             his = arr.at(0).ref();
@@ -35,7 +34,7 @@ void History::visit(const Ref<Book> &book) {
     }
 }
 
-RefArray History::histories(long long from) {
+Array History::histories(long long from) {
     Ref<Query> q = query()->less("date", from)->sortBy("date")->limit(History_count_per_page);
     q->setSortAsc(false);
     return q->results();

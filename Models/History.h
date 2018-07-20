@@ -11,7 +11,7 @@
 
 #include "../nl_define.h"
 
-using namespace hirender;
+using namespace gr;
 
 namespace nl {
     CLASS_BEGIN_TN(History, Model, 1, History)
@@ -32,7 +32,7 @@ namespace nl {
         Ref<Book> getBook() const;
 
         static void visit(const Ref<Book> &book);
-        static RefArray histories(long long from);
+        static Array histories(long long from);
         static void clear();
 
         ON_LOADED_BEGIN(cls, Model<History>)

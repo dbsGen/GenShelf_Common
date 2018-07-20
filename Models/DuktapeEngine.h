@@ -12,7 +12,7 @@
 #include <core/Singleton.h>
 #include "../nl_define.h"
 
-using namespace hicore;
+using namespace gcore;
 
 namespace nl {
     CLASS_BEGIN_TN(DuktapeEngine, Singleton, 1, DuktapeEngine)

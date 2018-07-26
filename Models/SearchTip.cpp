@@ -3,6 +3,7 @@
 //
 
 #include "SearchTip.h"
+ #include <sys/time.h>
 
 using namespace nl;
 

@@ -28,7 +28,7 @@ void DuktapeEngine::fatal_handler(void *udata, const char *msg) {
 
 Variant DuktapeEngine::process(void *context) {
     duk_context *ctx = (duk_context*)context;
-    
+
     Variant ret;
     if (duk_is_string(ctx, -1)) {
         ret = duk_get_string(ctx, -1);
@@ -41,7 +41,7 @@ Variant DuktapeEngine::process(void *context) {
             duk_int_t len = duk_get_int(ctx, -1);
             duk_pop(ctx);
             Array arr;
-            
+
             for (int i = 0; i < len; ++i) {
                 if (duk_get_prop_index(ctx, -1, i)) {
                     arr->push_back(process(context));
@@ -57,11 +57,11 @@ Variant DuktapeEngine::process(void *context) {
 Variant DuktapeEngine::eval(const char *script) {
     duk_context *ctx = (duk_context*)context;
     duk_peval_string(ctx, script);
-    
+
     Variant ret = process(ctx);
-    
+
     duk_pop(ctx);
-    
+
     return ret;
 }
 

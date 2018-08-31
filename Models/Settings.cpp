@@ -60,7 +60,7 @@ Variant Settings::parseJson(void *node) {
             break;
         }
         case JSON_BOOL: {
-            ret = json_as_bool(node);
+            ret = (bool)json_as_bool(node);
             break;
         }
 
@@ -228,7 +228,7 @@ void Settings::load(const string &path) {
                         case SettingItem::Mark:
                         case SettingItem::Switch:
                         {
-                            item->setValue(json_as_bool(child));
+                            item->setValue((bool)json_as_bool(child));
                             break;
                         }
                         case SettingItem::Input:

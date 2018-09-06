@@ -13,9 +13,25 @@
 
 using namespace nl;
 
+int duktape_log(duk_context *ctx) {
+    int n = duk_get_top(ctx);
+
+    if (n > 0) {
+        const char *chs = duk_to_string(ctx, 0);
+        LOG(i, "%s", chs);
+    }
+
+    duk_push_number(ctx, 0);
+    return 1;  /* one return value */
+}
+
 DuktapeEngine::DuktapeEngine() {
     context = duk_create_heap(NULL, NULL, NULL, this,
                               &DuktapeEngine::fatal_handler);
+    duk_push_global_object((duk_context*)context);
+    duk_push_c_function((duk_context*)context, duktape_log, DUK_VARARGS);
+    duk_put_prop_string((duk_context*)context, -2 /*idx:global*/, "c_log");
+    duk_pop((duk_context*)context);
 }
 
 DuktapeEngine::~DuktapeEngine() {

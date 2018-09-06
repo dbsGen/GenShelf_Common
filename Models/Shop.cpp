@@ -341,8 +341,12 @@ void Shop::onInstallComplete(void *_client, void *sd, void *data) {
                     unzClose( zipfile );
                     goto failed;
                 }
+                string filepath = path + filename;
+                if (access(filepath.c_str(), F_OK) == 0) {
+                    unlink(filepath.c_str());
+                }
 
-                FILE *out = fopen((path + filename).c_str(), "wb");
+                FILE *out = fopen(filepath.c_str(), "wb");
                 if (out == NULL)
                 {
                     LOG(w, "could not open destination file");
